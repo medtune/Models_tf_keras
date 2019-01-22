@@ -29,9 +29,9 @@ def get_dataset(dataset_dir, phase_name, file_pattern, shuffle_buffer_size,
         dataset = dataset.repeat(num_epochs)    
     return dataset
 
-    def _augment(image, is_training=False):
-        """
-        Helper function for Data augmentation, depending on
-        the case: train or validation set of data
-        """
-        return image
+def _augment(image, is_training=False):
+    """
+    Helper function for Data augmentation, depending on
+    the case: train or validation set of data
+    """
+    return image
