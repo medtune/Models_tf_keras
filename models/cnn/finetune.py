@@ -5,46 +5,27 @@ of classes, we want to retrain our model depending on the following cases:
 retrain full CNN model, retrain some layers of CNN,
 only train the classifier (Dense neural network).
 """
-
+import tensorflow as tf
 import base
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.models import Model
+from tf.keras.layers import Dense, GlobalAveragePooling2D, Flatten
+from tf.keras.models import Model
 
-losses={
-
-}
+losses=["binary_crossentropy","categorical_crossentropy",
+        "sparse_categorical_crossentropy",
+        "mean_squared_logarithmic_error",
+        "cosine_proximity"]
 
 optimizers={
-    
+    "adadelta": tf.train.AdadeltaOptimizer,
+    "adagrad": tf.train.AdagradOptimizer,
+    "ftrl": tf.train.FtrlOptimizer,
+    "gradient_descent": tf.train.GradientDescentOptimizer,
+    "momentum": tf.train.MomentumOptimizer,
+    "rmsprop": tf.train.RMSPropOptimizer
 }
 
-def construct(name, num_classe, classification_layers=None):
+def assemble(model, classifier):
+    """Takes a ModelConstructor instance and a Classifier instance
+    We return a Model instance
     """
-    Args:
-        name: the name of the cnn model that we want 
-        num_classe: number of classes that you want to train the model on
-        classification
-        classification_layers:(optional) intermediate layers coming before
-        the Dense(num_classe) layer
-    Return:
-        Instance of Model class
-    """
-    pass
-
-def optimize(model, loss_name, optimizer_name, learning_rate, momentum):
-    """
-    Args:
-        model: Instance of Model class
-        loss_name: loss to be used, it is included in the following list::
-        []
-        optimizer_name: the name of the optimizer that we want to use
-        learning_rate: Desired learning rate (Hyperparameter)
-        momentum: For regularization (Hyperparameter)
-    Return:
-        Compiled Keras model that we want to pass to Estimator class
-        (from Estimator API)
-    """
-    assert loss_name in losses.keys()
-    assert optimizer_name in optimizers.keys()
-    
     pass
