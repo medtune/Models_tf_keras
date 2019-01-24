@@ -60,6 +60,7 @@ def get_input_shape(name, image_type):
         "rgb": (3,),
         "rgba": (4,)
     }
+    assert name in height_width.keys()
     return height_width.get(name)+channels.get(image_type)
 
 def check_args(name):
@@ -95,7 +96,7 @@ class ModelConstructor(object):
         #If a specific input shape is given (ex: mnist input shapes)
         self.input_placeholder = keras.Input(self.input_shape) #Input tensor
         #Convolutional neural network structure
-        self.architecture = get_model(self.name)(self.input_placeholder, include_top=False)
+        self.architecture = get_model(self.name)
     
     def construct(self):
         """
@@ -105,7 +106,9 @@ class ModelConstructor(object):
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        features = self.architecture.outputs
+        features = self.architecture(input_shape=self.input_shape,
+                                    input_tensor=self.input_placeholder,
+                                    include_top=False).output
         return features
     
 class Classifier(object):

@@ -11,10 +11,14 @@ def get_tfrecord(phase_name, file_pattern, image_size,
             'image/encoded':tf.FixedLenFeature((), tf.string),
             'image/class/id':tf.FixedLenFeature((), tf.int64),
         }
+        
         parsed_example = tf.parse_single_example(example, feature)
-        parsed_example['image/encoded'] = tf.image.decode_image(parsed_example['image/encoded'], channels=3)
-        parsed_example['image/encoded'] = _augment(parsed_example['image/encoded'], is_training)
-        return parsed_example
+        label = parsed_example["image/class/id"]
+        image = tf.image.decode_jpeg(parsed_example['image/encoded'], channels=image_size[2])
+        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        image = tf.image.resize_images(image, size=image_size[:2])
+        image = _augment(image, is_training)
+        return (image, label)
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'eval']:
         raise ValueError('The phase_name %s is not recognized.\
@@ -23,11 +27,12 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     #Compte le nombre total d'examples dans tous les fichiers
     file_pattern_for_counting = phase_name + '_' + file_pattern 
     files = tf.data.Dataset.list_files(file_pattern_for_counting)
-    dataset = files.interleave(tf.data.TFRecordDataset)
+    dataset = files.interleave(tf.data.TFRecordDataset, 1)
     dataset = dataset.map(_parse_fn)
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
+    dataset = dataset.batch(batch_size)
     return dataset
 
 def get_flat(phase_name, file_pattern, image_size,
@@ -36,7 +41,7 @@ def get_flat(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation), """
     def _parse_fn(filename):
         #Create the keys_to_features dictionary for the decoder    
-        image = tf.image.decode_image(tf.read_file(filename), channels=image_size[2])
+        image = tf.image.decode_jpeg(tf.read_file(filename), channels=image_size[2])
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         image = _augment(image, is_training)
@@ -47,13 +52,13 @@ def get_flat(phase_name, file_pattern, image_size,
                           Please input either train or eval as the phase_name' % (phase_name))
     #TODO: Remove counting num_samples. num_samples have to be fixed before
     #Compte le nombre total d'examples dans tous les fichiers
-    file_pattern_for_counting = phase_name + '_' + file_pattern 
-    files = tf.data.Dataset.list_files(file_pattern_for_counting)
-    dataset = files.interleave(tf.data.TFRecordDataset)
+    file_pattern_for_counting = file_pattern+ '_' + phase_name
+    dataset = tf.data.Dataset.list_files(file_pattern_for_counting)
     dataset = dataset.map(_parse_fn)
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
+    dataset = dataset.batch(batch_size)
     return dataset
 
 

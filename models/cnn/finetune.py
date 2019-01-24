@@ -6,7 +6,7 @@ retrain full CNN model, retrain some layers of CNN,
 only train the classifier (Dense neural network).
 """
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Flatten
+from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.models import Model
 
 
