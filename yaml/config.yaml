@@ -1,5 +1,5 @@
 dataset:
-  dataset_dir: "D:/MURA-v1.1"
+  dataset_dir: "D://MURA-v1.1//multiclass"
   file_pattern: "mura14_*.tfrecord"
   names_to_labels: {
                 '0':'ELBOW_negative', 

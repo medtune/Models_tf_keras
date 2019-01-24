@@ -6,7 +6,7 @@ def get_tfrecord(phase_name, file_pattern, image_size,
                 shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), datatset_dir."""
     def _parse_fn(example, is_training=is_training):
-        #Create the keys_to_features dictionary for the decoder    
+        # Create the keys_to_features dictionary for the decoder    
         feature = {
             'image/encoded':tf.FixedLenFeature((), tf.string),
             'image/class/id':tf.FixedLenFeature((), tf.int64),
@@ -19,13 +19,15 @@ def get_tfrecord(phase_name, file_pattern, image_size,
         image = tf.image.resize_images(image, size=image_size[:2])
         image = _augment(image, is_training)
         return (image, label)
-    #On vérifie si phase_name est 'train' ou 'validation'
+    # On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'eval']:
         raise ValueError('The phase_name %s is not recognized.\
                           Please input either train or eval as the phase_name' % (phase_name))
-    #TODO: Remove counting num_samples. num_samples have to be fixed before
-    #Compte le nombre total d'examples dans tous les fichiers
-    file_pattern_for_counting = phase_name + '_' + file_pattern 
+    # TODO: Remove counting num_samples. num_samples have to be fixed before
+    # Compte le nombre total d'examples dans tous les fichiers
+    # file_pattern will have the following format:
+    # alpha/beta/datasetname_*.tfrecord: * represents  the phase name:
+    file_pattern_for_counting = file_pattern.replace("*", phase_name)  
     files = tf.data.Dataset.list_files(file_pattern_for_counting)
     dataset = files.interleave(tf.data.TFRecordDataset, 1)
     dataset = dataset.map(_parse_fn)

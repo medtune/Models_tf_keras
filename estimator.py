@@ -114,7 +114,7 @@ def main():
     assembly.compile(**assembly_args)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,keep_checkpoint_max=num_epochs,
-                                        train_distribute=strategy, eval_distribute=strategy)
+                                        model_dir=train_dir)
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     
