@@ -1,9 +1,8 @@
 import tensorflow as tf
 import os
 
-def get_dataset(dataset_dir, phase_name, file_pattern, shuffle_buffer_size,
-                batch_size,labels_to_name, num_epochs=-1, is_training=False
-                ):
+def get_dataset(dataset_dir, phase_name, file_pattern, ,
+                batch_size,labels_to_name, num_epochs=-1, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), datatset_dir. """
     def _parse_fn(example, is_training=is_training):
         #Create the keys_to_features dictionary for the decoder    

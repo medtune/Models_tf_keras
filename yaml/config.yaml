@@ -1,0 +1,20 @@
+dataset:
+  dataset_dir:
+  file_pattern:
+  names_to_labels:
+  num_samples:
+  num_classes:
+  
+model:
+  name:
+
+train:
+  batch_size:
+  optimizer_noun:
+  learning_rate:
+    initial:
+    decay_factor:
+    before_decay:
+  num_epochs:
+  shuffle_buffer_size:
+eval:

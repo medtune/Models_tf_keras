@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Flatten
-from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Flatten
+
 import os
 
 """Models have the same arguments: 
@@ -12,7 +12,7 @@ alpha, depth_multiplier"""
 
 
 def get_model(name):
-    models = {
+    famous_cnn = {
     "densenet121": keras.applications.DenseNet121,
     "densenet169": keras.applications.DenseNet169,
     "densenet201": keras.applications.DenseNet201,
@@ -29,8 +29,8 @@ def get_model(name):
     }
     """Extract the desired model from 'models'
     dictionnary."""
-    assert name in models.keys()
-    return models.get(name)
+    assert name in famous_cnn.keys()
+    return famous_cnn.get(name)
 
 def get_input_shape(name, image_type):
     """
@@ -92,44 +92,29 @@ class ModelConstructor(object):
             self.input_shape = input_shape
         else:
             self.input_shape = get_input_shape(name, image_type)
-        
-        self.model = self.construct()
+        #If a specific input shape is given (ex: mnist input shapes)
+        self.input_placeholder = keras.Input(self.input_shape) #Input tensor
+        #Convolutional neural network structure
+        self.architecture = get_model(self.name)(self.input_placeholder, include_top=False)
     
     def construct(self):
         """
-        Given the defined architecture within this class, we choose
-        the non-trainable layers of the CNN model. By default, all
-        CNN layers are trainable. 
-        num_trainable (Integer) represents the number of layers we want to train,
-        begining from to queue of the model and going back to the first layer of the model
-        (ex: num_trainable=2 then:
-        for i in)
-        Args:
-            name: the name of the cnn model that we want 
-            num_classe: number of classes that you want to train 
-                        the model on classification      
-            classification_layers:(optional) intermediate layers coming before
-            the Dense(num_classe) layer. A list representing the number of neurons
-            in each layer
         Return:
-            Instance of Layer representing flattened features
+            Instance of Layer representing last layer of the CNN model
         """
-        #TODO: Add an assert op for classification_layers
-        #If a specific input shape is given (ex: mnist input shapes)
-        i_placeholder = tf.keras.Input(self.input_shape) #input placeholder
-        arch = get_model(self.name)
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        features = arch(i_placeholder, include_top=False)
-        return i_placeholder, features
+        features = self.architecture.outputs
+        return features
     
 class Classifier(object):
     """
     Multiclass classification makes the assumption that each sample is assigned to one and only one label
     Multilabel classification assigns to each sample a set of target labels
     """
-    def __init__(self, features, classification_layers, num_classes, 
+    def __init__(self, num_classes,
+                classification_layers=None, 
                 classification_type="multiclass",
                 activation_func=tf.nn.relu):
         """
@@ -145,21 +130,22 @@ class Classifier(object):
         self.classification_type = classification_type
         self.classification_layers = classification_layers
         #It also accepts features coming from the last layer of the CNN
-        self.x = Flatten()(features) #Represents the input to the neural network
         self.num_classes = num_classes
         self.activation = activation_func #define the activation function 
     
-    def construct(self):
+    def construct(self, features):
         """
         We construct a Neural Network with the number of layers equivalent to
-        len classification_layers list. 
+        len classification_layers list.
+        Args:
+            features: features layer 
         """
         #Create intermediate variable representing the intermediate layers
         #of the neural networks:
-        inter = self.x
+        inter = Flatten()(features)
         if self.classification_layers:
             for size in self.classification_layers:
-                inter = Dense(size, activation=self.activation)(self.x)
+                inter = Dense(size, activation=self.activation)(inter)
         if self.classification_type=="multiclass":
             x = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
         else:
