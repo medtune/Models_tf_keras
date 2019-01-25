@@ -6,7 +6,6 @@ from yaml import load
 ##New imports##
 from inputs.images import dataset_images
 from models.cnn import finetune, base
-from utils.training.hyperparameters import get_decaylr
 
 def input_fn(mode, file_pattern, image_size,
             num_classes, batch_size,
@@ -59,7 +58,7 @@ def main():
     # Number of categories we want to train the model on:
     num_classes = dataset_spec.get("num_classes")
     # Dictionnary mapping each label's name to an integer value
-    names_to_labels = dataset_spec.get("names_to_labels") 
+    #names_to_labels = dataset_spec.get("names_to_labels") 
     #labels_to_names = data["labels_to_names"]
     #==================================#
 
@@ -84,7 +83,7 @@ def main():
     #Decay factor
     decay_factor = learning_rate.get("decay_factor")
     before_decay = learning_rate.get("before_decay")
-
+    del config
     #Calculus of batches/epoch, number of steps after decay learning rate
     num_batches_per_epoch = int(num_samples / batch_size)
     #num_batches = num_steps for one epcoh
@@ -108,14 +107,11 @@ def main():
     image_size = model.input_shape
     # Define ModelConstructor instance base on the model_name:
     classifier = base.Classifier(num_classes)
-    #Create decay learning rate using the given arguments:
-    decay_lr = get_decaylr(initial_lr, decay_factor, decay_steps)
-    # Assemble both classifier and CNN model:
+        # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll
     # pass with assembly.compile(**assembly_args) : 
-    assembly, assembly_args = finetune.assemble(model, classifier,
-                                                optimizer_noun=optimizer_noun)
-    assembly.compile(**assembly_args)
+    assembly = finetune.assemble(model, classifier,
+                                optimizer_noun=optimizer_noun)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,keep_checkpoint_max=num_epochs,
                                         model_dir=train_dir)

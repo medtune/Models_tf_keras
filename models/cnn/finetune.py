@@ -68,7 +68,10 @@ def assemble(model, classifier,
                     "optimizer": optimizers.get(optimizer_noun)(learning_rate),
                     "metrics": ["accuracy"]
                     }
-    return assembly, assembly_args
+    assembly.compile(assembly_args.get("optimizer"),
+                    assembly_args.get("loss"),
+                    assembly_args.get("metrics"))
+    return assembly
 
 def trainable_layers():
     """Given the defined architecture within this class, we choose
