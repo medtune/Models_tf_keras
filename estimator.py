@@ -6,16 +6,16 @@ from yaml import load
 ##New imports##
 from inputs.images import dataset_images
 from models.cnn import finetune, base
-
+from utils.training.hyperparameters import get_decaylr
 
 def input_fn(mode, file_pattern, image_size,
-            names_to_labels, batch_size,
+            num_classes, batch_size,
             num_epochs, shuffle_buffer_size):
     train_mode = mode==tf.estimator.ModeKeys.TRAIN
     with tf.name_scope("dataset"):
         phase_name = "train" if train_mode else "eval"
         if os.sep in file_pattern:
-            # We fisrt split file_pattern given the os seperator
+            # We first split file_pattern given the os seperator
             # Then split the last element of the resulting list
             # using dot separator
             file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
@@ -25,7 +25,7 @@ def input_fn(mode, file_pattern, image_size,
             dataset = dataset_images.get_tfrecord(phase_name,
                                             file_pattern=file_pattern,
                                             image_size=image_size,
-                                            names_to_labels=names_to_labels,
+                                            num_classes=num_classes,
                                             batch_size=batch_size,
                                             num_epochs=num_epochs,
                                             shuffle_buffer_size=shuffle_buffer_size,
@@ -34,11 +34,12 @@ def input_fn(mode, file_pattern, image_size,
             dataset = dataset_images.get_flat(phase_name,
                                             file_pattern=file_pattern,
                                             image_size=image_size,
-                                            names_to_labels=names_to_labels,
+                                            num_classes=num_classes,
                                             batch_size=batch_size,
                                             num_epochs=num_epochs,
                                             shuffle_buffer_size=shuffle_buffer_size,
                                             is_training=train_mode)
+    
     return dataset 
 
 def main():
@@ -96,7 +97,6 @@ def main():
     #===================================================================== Training ===========================================================================#
     #Adding the graph:
     #Set the verbosity to INFO level
-    tf.reset_default_graph()
     tf.logging.set_verbosity(tf.logging.DEBUG)
     # Define max steps:
     max_step = num_epochs*num_batches_per_epoch
@@ -104,13 +104,17 @@ def main():
     # Define ModelConstructor instance base on the model_name:
     # input_shape and image_type are optional:
     model = base.ModelConstructor(model_name)
+    #take the expected image_size by the model 
     image_size = model.input_shape
     # Define ModelConstructor instance base on the model_name:
     classifier = base.Classifier(num_classes)
+    #Create decay learning rate using the given arguments:
+    decay_lr = get_decaylr(initial_lr, decay_factor, decay_steps)
     # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll
-    # pass with assembly.compile(**assembly_args)
-    assembly, assembly_args = finetune.assemble(model, classifier)
+    # pass with assembly.compile(**assembly_args) : 
+    assembly, assembly_args = finetune.assemble(model, classifier,
+                                                optimizer_noun=optimizer_noun)
     assembly.compile(**assembly_args)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,keep_checkpoint_max=num_epochs,
@@ -118,21 +122,24 @@ def main():
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     
+    #Define trainspec estimator, including max number of step for training 
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
                                                 file_pattern,
                                                 image_size,
-                                                names_to_labels,
+                                                num_classes,
                                                 batch_size,
                                                 num_epochs,
                                                 shuffle_buffer_size=1024), 
                                                 max_steps=max_step)
+    #Define evalspec estimator
     eval_spec = tf.estimator.EvalSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.EVAL,
                                                     file_pattern,
                                                     image_size,
-                                                    names_to_labels,
+                                                    num_classes,
                                                     batch_size,
                                                     num_epochs,
                                                     shuffle_buffer_size=256))       
+    #Run the training and evaluation (1 eval/epoch)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
 

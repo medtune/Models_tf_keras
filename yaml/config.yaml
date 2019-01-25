@@ -19,7 +19,7 @@ dataset:
                 }
   num_samples: 36807
   num_classes: 14
-  
+  image_type: "jpg"
 model:
   name: "mobilenetv2"
 
@@ -32,3 +32,6 @@ train:
     before_decay: 2
   num_epochs: 100
   shuffle_buffer_size: 1024
+  classification:
+    classification_layers: null
+    classification_type: "multiclass"

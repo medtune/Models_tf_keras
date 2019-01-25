@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 def get_tfrecord(phase_name, file_pattern, image_size,
-                names_to_labels, batch_size=32, num_epochs=-1,
+                num_classes, batch_size=32, num_epochs=-1,
                 shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), datatset_dir."""
     def _parse_fn(example, is_training=is_training):
@@ -10,10 +10,10 @@ def get_tfrecord(phase_name, file_pattern, image_size,
         feature = {
             'image/encoded':tf.FixedLenFeature((), tf.string),
             'image/class/id':tf.FixedLenFeature((), tf.int64),
-        }
-        
+            }
         parsed_example = tf.parse_single_example(example, feature)
         label = parsed_example["image/class/id"]
+        label = tf.one_hot(label, num_classes)
         image = tf.image.decode_jpeg(parsed_example['image/encoded'], channels=image_size[2])
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
@@ -38,7 +38,7 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     return dataset
 
 def get_flat(phase_name, file_pattern, image_size,
-            names_to_labels, batch_size=32, num_epochs=-1,
+            num_classes, batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), """
     def _parse_fn(filename):
@@ -70,3 +70,4 @@ def _augment(image, is_training=False):
     the case: train or validation set of data
     """
     return image
+
