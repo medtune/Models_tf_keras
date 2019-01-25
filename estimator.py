@@ -113,8 +113,11 @@ def main():
     assembly = finetune.assemble(model, classifier,
                                 optimizer_noun=optimizer_noun)
     # Define configuration:
-    run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,keep_checkpoint_max=num_epochs,
-                                        model_dir=train_dir)
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
+                                        keep_checkpoint_max=num_epochs,
+                                        model_dir=train_dir,
+                                        train_distribute=strategy,
+                                        eval_distribute=strategy)
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     

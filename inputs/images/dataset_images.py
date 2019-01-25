@@ -33,7 +33,9 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     dataset = dataset.map(_parse_fn)
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
-        dataset = dataset.repeat(num_epochs)    
+        dataset = dataset.repeat(-1)    
+    else:
+        dataset = dataset.repeat(num_epochs)
     dataset = dataset.batch(batch_size)
     return dataset
 
