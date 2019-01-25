@@ -90,7 +90,7 @@ def assemble_gpus(model, classifier,
     """
     assert optimizer_noun in optimizers.keys()
     # Using the ModelConstructor instance, we build our CNN architecture
-    with tf.device('/gpu:0'):
+    with tf.device(['/gpu:0','/gpu:1']):
         features = model.construct()
     # Using the features previously extracted, we also build our classifier 
     with tf.device('/gpu:1'):
