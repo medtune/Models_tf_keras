@@ -99,7 +99,8 @@ def assemble_gpus(model, classifier,
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
     percent = int(len(assembly.layers)/len(devices))
     for i, layers in enumerate(assembly.layers):
-        with tf.device(devices[i*percent]):
+        print(int(i/percent))
+        with tf.device(devices[int(i/percent)]):
             layers
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
