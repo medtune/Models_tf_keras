@@ -2,20 +2,8 @@ dataset:
   dataset_dir: "D://MURA-v1.1"
   file_pattern: "phase_name//*//*//*//*.png"
   names_to_labels: {
-                '0':'ELBOW_negative', 
-                '1':'ELBOW_positive',
-                '2':'FINGER_negative', 
-                '3':'FINGER_positive',
-                '4': 'FOREARM_negative',
-                '5': 'FOREARM_positive',
-                '6': 'HAND_negative',
-                '7': 'HAND_positive',
-                '8': 'HUMERUS_negative',
-                '9': 'HUMERUS_positive',
-                '10': 'SHOULDER_negative',
-                '11': 'SHOULDER_positive',
-                '12': 'WRIST_negative',
-                '13': 'WRIST_positive'
+                'negative':'0', 
+                'positive':'1'
                 }
   num_samples: 36807
   num_classes: 2

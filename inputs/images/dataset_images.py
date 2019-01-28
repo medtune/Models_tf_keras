@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 def get_tfrecord(phase_name, file_pattern, image_size,
-                num_classes, batch_size=32, num_epochs=-1,
+                names_to_labels, num_classes, batch_size=32, num_epochs=-1,
                 shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), datatset_dir."""
     def _parse_fn(example, is_training=is_training):
@@ -40,7 +40,7 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     return dataset
 
 def get_flat(phase_name, file_pattern, image_size,
-            num_classes, batch_size=32, num_epochs=-1,
+            names_to_labels, num_classes, batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), """
     def _parse_fn(filename):
@@ -66,7 +66,7 @@ def get_flat(phase_name, file_pattern, image_size,
     return dataset
 
 def get_Mura(phase_name, file_pattern, image_size,
-            num_classes, batch_size=32, num_epochs=-1,
+            names_to_labels, num_classes, batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation) for
     MURA dataset
@@ -77,6 +77,7 @@ def get_Mura(phase_name, file_pattern, image_size,
         #NOTE:The Following line is an efficient way of extracting label for MURA
         #(ex: \data\MURA-v1.1\train\XR_ELBOW\patient00011\study1_negative\image.png)
         label = tf.string_split([filename_split[-2]], delimiter = "_").values[-1]
+        label = tf.one_hot(names_to_labels[label], num_classes)
         image = tf.image.decode_png(tf.read_file(filename), channels=image_size[2])
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])

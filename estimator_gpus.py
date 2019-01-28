@@ -8,7 +8,7 @@ from inputs.images import dataset_images
 from models.cnn import finetune, base
 
 def input_fn(mode, file_pattern, image_size,
-            num_classes, batch_size,
+            names_to_labels, num_classes, batch_size,
             num_epochs, shuffle_buffer_size):
     train_mode = mode==tf.estimator.ModeKeys.TRAIN
     with tf.name_scope("dataset"):
@@ -58,7 +58,7 @@ def main():
     # Number of categories we want to train the model on:
     num_classes = dataset_spec.get("num_classes")
     # Dictionnary mapping each label's name to an integer value
-    #names_to_labels = dataset_spec.get("names_to_labels") 
+    names_to_labels = dataset_spec.get("names_to_labels") 
     #labels_to_names = data["labels_to_names"]
     #==================================#
 
@@ -123,6 +123,7 @@ def main():
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
                                                 file_pattern,
                                                 image_size,
+                                                names_to_labels,
                                                 num_classes,
                                                 batch_size,
                                                 num_epochs,
@@ -132,6 +133,7 @@ def main():
     eval_spec = tf.estimator.EvalSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.EVAL,
                                                     file_pattern,
                                                     image_size,
+                                                    names_to_labels,
                                                     num_classes,
                                                     batch_size,
                                                     num_epochs,
