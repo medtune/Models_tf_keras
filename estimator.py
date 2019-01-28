@@ -59,8 +59,8 @@ def main():
     num_samples = dataset_spec.get("num_samples") 
     # Number of categories we want to train the model on:
     num_classes = dataset_spec.get("num_classes")
-    # Dictionnary mapping each label's name to an integer value
-    #names_to_labels = dataset_spec.get("names_to_labels") 
+    # list containing each label's name :
+    names_to_labels = dataset_spec.get("names_to_labels") 
     #labels_to_names = data["labels_to_names"]
     #==================================#
 
@@ -127,6 +127,7 @@ def main():
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
                                                 file_pattern,
                                                 image_size,
+                                                names_to_labels,
                                                 num_classes,
                                                 batch_size,
                                                 num_epochs,
@@ -136,6 +137,7 @@ def main():
     eval_spec = tf.estimator.EvalSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.EVAL,
                                                     file_pattern,
                                                     image_size,
+                                                    names_to_labels,
                                                     num_classes,
                                                     batch_size,
                                                     num_epochs,
