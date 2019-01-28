@@ -8,7 +8,8 @@ only train the classifier (Dense neural network).
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.models import Model
-
+from . import base
+from .base import ModelConstructor, Classifier
 
 losses=["binary_crossentropy","categorical_crossentropy",
         "sparse_categorical_crossentropy",
@@ -88,11 +89,23 @@ def assemble_gpus(model, classifier,
     Return:
         A Keras Model with defined loss, optimizer and metrics.
     """
-    assert optimizer_noun in optimizers.keys()
+    devices = ['/gpu:0', '/gpu:1']
     # Using the ModelConstructor instance, we build our CNN architecture
-    features = model.construct()
+    layers = model.architecture.layers
+    if len(devices) == 2:
+        percent = int(3*len(layers)/4)
+
+    else:
+        percent = int(len(layers)/len(devices))
+    x = model.architecture.input
+    for i, layer in enumerate(model.architecture.layers):    
+        with tf.device(devices[int(i/percent)]):
+            x = layer(x)
+    
+    assert optimizer_noun in optimizers.keys()
+    
     # Using the features previously extracted, we also build our classifier 
-    logits = classifier.construct(features)
+    logits = classifier.construct(x)
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
@@ -104,8 +117,7 @@ def assemble_gpus(model, classifier,
                     }
     assembly.compile(assembly_args.get("optimizer"),
                     assembly_args.get("loss"),
-                    assembly_args.get("metrics"),
-                    context=['/gpu:0','/gpu:1'])
+                    assembly_args.get("metrics"))
     return assembly
 
 def trainable_layers():

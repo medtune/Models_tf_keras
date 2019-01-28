@@ -96,7 +96,10 @@ class ModelConstructor(object):
         #If a specific input shape is given (ex: mnist input shapes)
         self.input_placeholder = keras.Input(self.input_shape) #Input tensor
         #Convolutional neural network structure
-        self.architecture = get_model(self.name)
+        self.architecture = get_model(self.name)\
+                                    (input_shape=self.input_shape,
+                                    input_tensor=self.input_placeholder,
+                                    include_top=False)
     
     def construct(self):
         """
@@ -106,10 +109,7 @@ class ModelConstructor(object):
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        features = self.architecture(input_shape=self.input_shape,
-                                    input_tensor=self.input_placeholder,
-                                    include_top=False).output
-        return features
+        return self.architecture
     
 class Classifier(object):
     """
@@ -150,7 +150,7 @@ class Classifier(object):
             for size in self.classification_layers:
                 inter = Dense(size, activation=self.activation)(inter)
         if self.classification_type=="multiclass":
-            x = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
+            logits = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
         else:
-            x = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
-        return x
+            logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
+        return logits
