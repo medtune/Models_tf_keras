@@ -107,7 +107,6 @@ def main():
     #take the expected image_size by the model 
     image_size = model.input_shape
     # Define ModelConstructor instance base on the model_name:
-    
     classifier = base.Classifier(num_classes)
     # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll

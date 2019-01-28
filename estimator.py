@@ -8,7 +8,7 @@ from inputs.images import dataset_images
 from models.cnn import finetune, base
 
 def input_fn(mode, file_pattern, image_size,
-            num_classes, batch_size,
+            names_to_labels, num_classes, batch_size,
             num_epochs, shuffle_buffer_size):
     train_mode = mode==tf.estimator.ModeKeys.TRAIN
     with tf.name_scope("dataset"):
@@ -24,15 +24,17 @@ def input_fn(mode, file_pattern, image_size,
             dataset = dataset_images.get_tfrecord(phase_name,
                                             file_pattern=file_pattern,
                                             image_size=image_size,
+                                            names_to_labels=names_to_labels,
                                             num_classes=num_classes,
                                             batch_size=batch_size,
                                             num_epochs=num_epochs,
                                             shuffle_buffer_size=shuffle_buffer_size,
                                             is_training=train_mode)
         else:
-            dataset = dataset_images.get_flat(phase_name,
+            dataset = dataset_images.get_Mura(phase_name,
                                             file_pattern=file_pattern,
                                             image_size=image_size,
+                                            names_to_labels=names_to_labels,
                                             num_classes=num_classes,
                                             batch_size=batch_size,
                                             num_epochs=num_epochs,
