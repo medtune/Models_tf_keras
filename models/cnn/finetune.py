@@ -97,9 +97,8 @@ def assemble_gpus(model, classifier,
     # Using the features previously extracted, we also build our classifier 
     logits = classifier.construct(features)
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
-    percent = int(len(assembly.layers)/len(devices))
+    percent = int(len(assembly.layers)-1/len(devices))
     for i, layers in enumerate(assembly.layers):
-        print(int(i/percent))
         with tf.device(devices[int(i/percent)]):
             layers
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
