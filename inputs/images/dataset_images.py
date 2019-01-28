@@ -71,13 +71,14 @@ def get_Mura(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation) for
     MURA dataset
     """
+    table = tf.contrib.lookup.index_table_from_tensor(mapping=tf.constant(names_to_labels))
     def _parse_fn(filename):
         #Create the keys_to_features dictionary for the decoder    
         filename_split = tf.string_split([filename], delimiter=os.sep).values
         #NOTE:The Following line is an efficient way of extracting label for MURA
         #(ex: \data\MURA-v1.1\train\XR_ELBOW\patient00011\study1_negative\image.png)
         label = tf.string_split([filename_split[-2]], delimiter = "_").values[-1]
-        label = tf.one_hot(names_to_labels[label], num_classes)
+        label = tf.one_hot(table.lookup(label), num_classes)
         image = tf.image.decode_png(tf.read_file(filename), channels=image_size[2])
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
@@ -87,7 +88,7 @@ def get_Mura(phase_name, file_pattern, image_size,
     if phase_name not in ['train', 'eval']:
         raise ValueError('The phase_name %s is not recognized.\
                           Please input either train or eval as the phase_name' % (phase_name))
-    #Usin,g fiole_pattern, we replace the phase_name:
+    #Using file_pattern, we replace the phase_name:
     file_pattern_for_counting = file_pattern.replace("phase_name", phase_name)
     #Use list file utiliy function, resulting in a tf.data.Dataset of filenames
     dataset = tf.data.Dataset.list_files(file_pattern_for_counting)
