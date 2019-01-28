@@ -1,6 +1,6 @@
 import tensorflow as tf
 import os
-import Models_tf_keras.utils.images.visu_tensorflow as visu_tensorflow
+import utils.images.visu_tensorflow as visu_tensorflow
 
 def load_mura(filenames_pattern, num_channels, image_extension='jpg'):
     """
