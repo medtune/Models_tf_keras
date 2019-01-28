@@ -1,6 +1,6 @@
 dataset:
-  dataset_dir: "D://MURA-v1.1"
-  file_pattern: "phase_name//*//*//*//*.png"
+  dataset_dir: "/data"
+  file_pattern: "phase_name/*/*/*/*.png"
   names_to_labels: ['negative', 'positive']
   num_samples: 36807
   num_classes: 2
