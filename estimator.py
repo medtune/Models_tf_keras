@@ -12,7 +12,7 @@ def input_fn(mode, file_pattern, image_size,
             num_epochs, shuffle_buffer_size):
     train_mode = mode==tf.estimator.ModeKeys.TRAIN
     with tf.name_scope("dataset"):
-        phase_name = "train" if train_mode else "eval"
+        phase_name = "train" if train_mode else "valid"
         if os.sep in file_pattern:
             # We first split file_pattern given the os seperator
             # Then split the last element of the resulting list
