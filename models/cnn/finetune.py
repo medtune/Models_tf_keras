@@ -100,7 +100,7 @@ def assemble_gpus(model, classifier,
     x = model.architecture.input
     for i, layer in enumerate(model.architecture.layers):    
         with tf.device(devices[int(i/percent)]):
-            x = layer(x)
+            x = layer([x])
     
     assert optimizer_noun in optimizers.keys()
     
