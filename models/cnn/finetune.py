@@ -88,19 +88,15 @@ def assemble_gpus(model, classifier,
         label_type: (optional) sparse or onehot 
     Return:
         A Keras Model with defined loss, optimizer and metrics.
-    """
-    devices = ['/gpu:0', '/gpu:1']
-                
+    """               
     assert optimizer_noun in optimizers.keys()
     # Using the ModelConstructor instance, we build our CNN architecture
-    features = model.construct()
+    with tf.device('/gpu:0'):
+        features = model.construct()
     # Using the features previously extracted, we also build our classifier 
-    logits = classifier.construct(features)
+    with tf.device('/gpu:1'):
+        logits = classifier.construct(features)
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
-    percent = int(len(assembly.layers)-1/len(devices))
-    for i, layers in enumerate(assembly.layers):
-        with tf.device(devices[int(i/percent)]):
-            layers
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
     # as it is required
