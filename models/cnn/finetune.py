@@ -90,23 +90,17 @@ def assemble_gpus(model, classifier,
         A Keras Model with defined loss, optimizer and metrics.
     """
     devices = ['/gpu:0', '/gpu:1']
-    # Using the ModelConstructor instance, we build our CNN architecture
-    layers = model.architecture.layers
-    if len(devices) == 2:
-        percent = int(3*len(layers)/4)
-
-    else:
-        percent = int(len(layers)/len(devices))
-    x = model.architecture.input
-    for i, layer in enumerate(model.architecture.layers):    
-        with tf.device(devices[int(i/percent)]):
-            x = layer([x])
-    
+                
     assert optimizer_noun in optimizers.keys()
-    
+    # Using the ModelConstructor instance, we build our CNN architecture
+    features = model.construct()
     # Using the features previously extracted, we also build our classifier 
-    logits = classifier.construct(x)
+    logits = classifier.construct(features)
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
+    percent = int(len(assembly.layers)/len(devices))
+    for i, layers in enumerate(assembly.layers):
+        with tf.device(devices[i*percent]):
+            layers
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
     # as it is required

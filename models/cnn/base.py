@@ -109,7 +109,7 @@ class ModelConstructor(object):
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        return self.architecture
+        return self.architecture.output
     
 class Classifier(object):
     """
