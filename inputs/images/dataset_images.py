@@ -106,8 +106,7 @@ def get_GED(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation) for
     rvl-cdip dataset
     """
-    table = tf.contrib.lookup.index_table_from_tensor(mapping=tf.constant(names_to_labels))
-    def _parse_fn(filename):
+    def _parse_fn(line):
         #Create the keys_to_features dictionary for the decoder    
         filename_split = tf.string_split([filename], delimiter=os.sep).values
         #NOTE:The Following line is an efficient way of extracting label for MURA
