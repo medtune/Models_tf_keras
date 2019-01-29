@@ -121,7 +121,7 @@ def main():
                                         train_distribute=strategy,
                                         eval_distribute=strategy)
     #Turn the Keras model to an estimator, so we can use Estimator API
-    estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
+    estimator = tf.estimator.model_to_estimator(assembly, config=run_config)
     
     #Define trainspec estimator, including max number of step for training 
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,

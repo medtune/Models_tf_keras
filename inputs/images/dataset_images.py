@@ -106,32 +106,53 @@ def get_GED(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation) for
     rvl-cdip dataset
     """
+    images_dir = os.path.dirname(file_pattern).replace("labels","images")
+    
     def _parse_fn(line):
         #Create the keys_to_features dictionary for the decoder    
-        filename_split = tf.string_split([filename], delimiter=os.sep).values
-        #NOTE:The Following line is an efficient way of extracting label for MURA
-        #(ex: \data\MURA-v1.1\train\XR_ELBOW\patient00011\study1_negative\image.png)
-        label = tf.string_split([filename_split[-2]], delimiter = "_").values[-1]
-        label = tf.one_hot(table.lookup(label), num_classes)
-        image = tf.image.decode_png(tf.read_file(filename), channels=image_size[2])
+        split = tf.string_split([line], delimiter=" ").values
+        filename, label = tf.strings.join([images_dir,split[0]], separator=os.sep), tf.strings.to_number(split[1], tf.int32)
+        tf.print(filename)
+        image = tf.read_file(filename)
+        image = tf.image.decode_jpeg(image, channels=1)
+        #NOTE:The Following line is an efficient way of extracting label
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
+        label = tf.one_hot(label, num_classes)
         return (image, label)
     #On vérifie si phase_name est 'train' ou 'validation'
-    if phase_name not in ['train', 'valid', 'test']:
+    if phase_name not in ['train', 'val', 'test']:
         raise ValueError('The phase_name %s is not recognized.\
                           Please input either train or eval as the phase_name' % (phase_name))
     #Using file_pattern, we replace the phase_name:
     file_pattern_for_counting = file_pattern.replace("phase_name", phase_name)
+    assert os.path.exists(file_pattern_for_counting)
     #Use list file utiliy function, resulting in a tf.data.Dataset of filenames
-    dataset = tf.data.Dataset.list_files(file_pattern_for_counting)
+    dataset = tf.data.TextLineDataset([file_pattern_for_counting])
     #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
     dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
-    if is_training:
+    """if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
-    dataset = dataset.batch(batch_size)
+    dataset = dataset.batch(batch_size)"""
     return dataset
+
+
+a = get_GED('train', "G:/rvl-cdip/labels/phase_name.txt",
+        (224,224,1),[],16,is_training=True)
+b = a.make_one_shot_iterator()
+c = b.get_next()
+d = b.get_next()
+
+with tf.Session() as sess:
+    print("aaaaa")
+    k = sess.run(c)
+    print(k)
+    k = sess.run(d)
+    print(k)
+
+
+
 def _augment(image, is_training=False):
     """
     Helper function for Data augmentation, depending on
