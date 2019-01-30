@@ -1,6 +1,12 @@
 import tensorflow as tf
 import os
 
+
+def get_inputfn():
+    pass
+
+
+
 def get_tfrecord(phase_name, file_pattern, image_size,
                 names_to_labels, num_classes, batch_size=32, num_epochs=-1,
                 shuffle_buffer_size=1024, is_training=False):
@@ -138,7 +144,7 @@ def get_GED(phase_name, file_pattern, image_size,
     return dataset
 
 
-a = get_GED('train', "G:/rvl-cdip/labels/phase_name.txt",
+"""a = get_GED('train', "G:/rvl-cdip/labels/phase_name.txt",
         (224,224,1),[],16,is_training=True)
 b = a.make_one_shot_iterator()
 c = b.get_next()
@@ -149,7 +155,7 @@ with tf.Session() as sess:
     k = sess.run(c)
     print(k)
     k = sess.run(d)
-    print(k)
+    print(k)"""
 
 
 

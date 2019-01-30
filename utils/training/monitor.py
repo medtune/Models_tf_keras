@@ -3,7 +3,12 @@ import tensorflow as tf
 """
 This module contains the utility functions that help us define
 custom hyperparameters like decay learning rate
+It also defines training hooks for monitoring hardware performance and
+time processing
+It also provides utily functions to call tf.summary.xxx depending on the
+model
 """
+
 def get_decaylr(initial_lr, decay_factor, decay_steps, global_step):
     """
     Utility function to get a decayed

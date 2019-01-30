@@ -6,6 +6,7 @@ from yaml import load
 ##New imports##
 from inputs.images import dataset_images
 from models.cnn import finetune, base
+from utils.training import monitor
 
 def input_fn(mode, file_pattern, image_size,
             names_to_labels, num_classes, batch_size,
@@ -109,11 +110,16 @@ def main():
     image_size = model.input_shape
     # Define ModelConstructor instance base on the model_name:
     classifier = base.Classifier(num_classes)
-        # Assemble both classifier and CNN model:
+    #Create learning rate:
+    lr = monitor.get_decaylr(initial_lr,
+                                    decay_factor,
+                                    decay_steps)
+    # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll
     # pass with assembly.compile(**assembly_args) : 
     assembly = finetune.assemble(model, classifier,
-                                optimizer_noun=optimizer_noun)
+                                optimizer_noun=optimizer_noun,
+                                learning_rate=lr)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,
@@ -121,7 +127,7 @@ def main():
                                         train_distribute=strategy,
                                         eval_distribute=strategy)
     #Turn the Keras model to an estimator, so we can use Estimator API
-    estimator = tf.estimator.model_to_estimator(assembly, config=run_config)
+    estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     
     #Define trainspec estimator, including max number of step for training 
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
