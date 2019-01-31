@@ -60,6 +60,7 @@ def get_metrics(label_type, num_classes):
     metrics = []
     if num_classes==2:
             metrics.append(tf.keras.metrics.binary_accuracy)
+            metrics.append(tf.keras.metrics.top_k_categorical_accuracy)
     else:
         if label_type=="sparse":
             metrics.append(tf.keras.metrics.sparse_categorical_accuracy)
