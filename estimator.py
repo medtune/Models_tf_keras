@@ -118,6 +118,7 @@ def main():
                                 learning_rate=learning_rate,
                                 distribute=distribute)
     assembly.summary()
+    monitor.get_summary(assembly)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,

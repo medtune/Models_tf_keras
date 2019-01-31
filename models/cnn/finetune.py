@@ -92,7 +92,7 @@ def assemble(model, classifier,
         optimizer = native_optimizers.get(optimizer_noun)(learning_rate)
     else:
         assert optimizer_noun in keras_optimizers.keys()
-        optimizer = keras_optimizers.get(optimizer_noun)(learning_rate, decay=0.00001)
+        optimizer = keras_optimizers.get(optimizer_noun)(learning_rate, decay=1e-10)
     # Using the ModelConstructor instance, we build our CNN architecture
     features = model.construct()
     # Using the features previously extracted, we also build our classifier 

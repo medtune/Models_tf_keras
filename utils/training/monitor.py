@@ -30,9 +30,12 @@ def get_decaylr(initial_lr, decay_factor, decay_steps, global_step):
     tf.summary.scalar('learning_rate', lr)
     return lr
 
-def get_accuracy(model):
+def get_summary(model):
     """
     Given a Model instance (a combination of a CNN model & a classifier),
     we compute and return a tf.summary instance
     """
-    print(model.layers)
+    tf.summary.image("image", model.layers[0].output)
+    for i, layer in enumerate(model.layers):
+        tf.summary.histogram(layer.name, layer.output)
+        tf.summary.histogram(layer.name+" weights", layer.trainable_weights)
