@@ -35,10 +35,7 @@ def get_summary(model):
     Given a Model instance (a combination of a CNN model & a classifier),
     we compute and return a tf.summary instance
     """
-    input_size = model.layers[0].output_shape
     tf.summary.image("image", model.layers[0].output)
     for i, layer in enumerate(model.layers[1:]):
         output = layer.output
-        k = tf.reshape(output,input_size)
-        tf.summary.image(layer.name+"_image", k)
         tf.summary.histogram(layer.name, output)
