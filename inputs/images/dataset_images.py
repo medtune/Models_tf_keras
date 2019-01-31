@@ -112,15 +112,13 @@ def get_GED(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation) for
     rvl-cdip dataset
     """
-    images_dir = os.path.join(os.path.dirname(file_pattern), "labels")
-    
+    images_dir = os.path.dirname(file_pattern).replace("labels", "images")
     def _parse_fn(line):
         #Create the keys_to_features dictionary for the decoder    
         split = tf.string_split([line], delimiter=" ").values
         filename, label = tf.strings.join([images_dir,split[0]], separator=os.sep), tf.strings.to_number(split[1], tf.int32)
-        tf.print(filename)
         image = tf.read_file(filename)
-        image = tf.image.decode_jpeg(image, channels=1)
+        image = tf.image.decode_jpeg(image, channels=image_size[2])
         #NOTE:The Following line is an efficient way of extracting label
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
@@ -137,10 +135,10 @@ def get_GED(phase_name, file_pattern, image_size,
     dataset = tf.data.TextLineDataset([file_pattern_for_counting])
     #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
     dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
-    """if is_training:
+    if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
-    dataset = dataset.batch(batch_size)"""
+    dataset = dataset.batch(batch_size)
     return dataset
 
 
