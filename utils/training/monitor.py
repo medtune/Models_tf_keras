@@ -38,4 +38,4 @@ def get_summary(model):
     tf.summary.image("image", model.layers[0].output)
     for i, layer in enumerate(model.layers):
         tf.summary.histogram(layer.name, layer.output)
-        tf.summary.histogram(layer.name+" weights", layer.trainable_weights)
+        tf.summary.histogram(layer.name+"_weights", layer.weights)
