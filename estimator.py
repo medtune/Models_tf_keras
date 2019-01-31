@@ -41,7 +41,6 @@ def input_fn(mode, file_pattern, image_size,
                                             num_epochs=num_epochs,
                                             shuffle_buffer_size=shuffle_buffer_size,
                                             is_training=train_mode)
-    
     return dataset 
 
 def main():
@@ -61,7 +60,9 @@ def main():
     # Number of categories we want to train the model on:
     num_classes = dataset_spec.get("num_classes")
     # list containing each label's name :
-    names_to_labels = dataset_spec.get("names_to_labels") 
+    names_to_labels = dataset_spec.get("names_to_labels")
+    #Retrieve image_type:
+    image_type = dataset_spec.get("image_type")
     #labels_to_names = data["labels_to_names"]
     #==================================#
 
@@ -75,6 +76,7 @@ def main():
     #==================================#
     #Number of epochs for training the model
     train_spec = config.get("train")
+    distribute = train_spec.get("distribute")
     num_epochs = train_spec.get("num_epochs")
     #State your batch size
     batch_size = train_spec.get("batch_size")
@@ -82,15 +84,10 @@ def main():
     optimizer_noun = train_spec.get("optimizer_noun")
     #Learning rate information and configuration
     learning_rate = train_spec.get("learning_rate")
-    initial_lr = learning_rate.get("initial")
-    #Decay factor
-    decay_factor = learning_rate.get("decay_factor")
-    before_decay = learning_rate.get("before_decay")
     del config
     #Calculus of batches/epoch, number of steps after decay learning rate
     num_batches_per_epoch = int(num_samples / batch_size)
-    #num_batches = num_steps for one epcoh
-    decay_steps = int(before_decay * num_batches_per_epoch)
+    #num_batches = num_steps for one epoch
     train_dir = os.path.join(cwd, "train_"+ model_name)
     #==================================#
     #Create log_dir:argscope_config
@@ -102,24 +99,25 @@ def main():
     tf.logging.set_verbosity(tf.logging.DEBUG)
     # Define max steps:
     max_step = num_epochs*num_batches_per_epoch
-    strategy = tf.contrib.distribute.MirroredStrategy()
+    if distribute:
+        strategy = tf.contrib.distribute.MirroredStrategy()
+    else:
+        strategy= None
     # Define ModelConstructor instance base on the model_name:
     # input_shape and image_type are optional:
-    model = base.ModelConstructor(model_name)
+    model = base.ModelConstructor(model_name, image_type=image_type)
     #take the expected image_size by the model 
     image_size = model.input_shape
     # Define ModelConstructor instance base on the model_name:
     classifier = base.Classifier(num_classes)
-    #Create learning rate:
-    lr = monitor.get_decaylr(initial_lr,
-                                    decay_factor,
-                                    decay_steps)
     # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll
     # pass with assembly.compile(**assembly_args) : 
     assembly = finetune.assemble(model, classifier,
                                 optimizer_noun=optimizer_noun,
-                                learning_rate=lr)
+                                learning_rate=learning_rate,
+                                distribute=distribute)
+    assembly.summary()
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,

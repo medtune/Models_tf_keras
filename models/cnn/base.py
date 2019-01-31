@@ -80,8 +80,8 @@ class ModelConstructor(object):
     This class provides methods to construct the CNN model and define
     the trainable layers (By default, all layers are trainable)
     """
-    def __init__(self, name, 
-                input_shape=None, image_type="rgb"):
+    def __init__(self, name, image_type="rgb",
+                input_shape=None):
 
         #Name referring to the CNN model
         self.name = name 
@@ -95,17 +95,18 @@ class ModelConstructor(object):
             self.input_shape = get_input_shape(name, image_type)
         #If a specific input shape is given (ex: mnist input shapes)
         self.input_placeholder = keras.Input(self.input_shape) #Input tensor
-        #Convolutional neural network structure
-        self.architecture = get_model(self.name)\
-                                    (input_shape=self.input_shape,
-                                    input_tensor=self.input_placeholder,
-                                    include_top=False)
+        
+        
     
     def construct(self):
         """
         Return:
             Instance of Layer representing last layer of the CNN model
         """
+        #Convolutional neural network structure
+        self.architecture = get_model(self.name)(input_shape=self.input_shape,
+                                    input_tensor=self.input_placeholder,
+                                    include_top=False)
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument

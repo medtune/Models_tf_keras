@@ -194,3 +194,6 @@ def main():
     estimator = tf.estimator.Estimator(model_fn, config=run_config)
     #Run the training and evaluation (1 eval/epoch)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+
+if __name__ == '__main__':
+    main()
