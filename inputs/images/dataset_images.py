@@ -112,7 +112,7 @@ def get_GED(phase_name, file_pattern, image_size,
     """Creates dataset based on phased_name(train or evaluation) for
     rvl-cdip dataset
     """
-    images_dir = os.path.dirname(file_pattern).replace("labels","images")
+    images_dir = os.path.join(os.path.dirname(file_pattern), "labels")
     
     def _parse_fn(line):
         #Create the keys_to_features dictionary for the decoder    
