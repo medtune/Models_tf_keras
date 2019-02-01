@@ -95,7 +95,7 @@ class ModelConstructor(object):
             self.input_shape = get_input_shape(name, image_type)
         #If a specific input shape is given (ex: mnist input shapes)
         self.input_placeholder = keras.Input(self.input_shape) #Input tensor
-        
+        self.weights = self.set_weights()
         
     
     def construct(self):
@@ -106,12 +106,20 @@ class ModelConstructor(object):
         #Convolutional neural network structure
         self.architecture = get_model(self.name)(input_shape=self.input_shape,
                                     input_tensor=self.input_placeholder,
-                                    include_top=False)
+                                    include_top=False,
+                                    weights = self.weights,
+                                    pooling=None)
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
         return self.architecture.output
     
+    def set_weights(self):
+        if self.image_type=="gray":
+            return None
+        return "imagenet"
+
+
 class Classifier(object):
     """
     Multiclass classification makes the assumption that each sample is assigned to one and only one label

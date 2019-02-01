@@ -43,6 +43,7 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     else:
         dataset = dataset.repeat(num_epochs)
     dataset = dataset.batch(batch_size)
+    tf.summary.image("image_summary",dataset)
     return dataset
 
 def get_flat(phase_name, file_pattern, image_size,
@@ -89,7 +90,8 @@ def get_Mura(phase_name, file_pattern, image_size,
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         image = _augment(image, is_training)
-        return (image, label)
+        tf.summary.image("image_summary",image)
+        return image, label
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'valid']:
         raise ValueError('The phase_name %s is not recognized.\
@@ -104,6 +106,7 @@ def get_Mura(phase_name, file_pattern, image_size,
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
     dataset = dataset.batch(batch_size)
+
     return dataset
 
 def get_GED(phase_name, file_pattern, image_size,
@@ -123,6 +126,7 @@ def get_GED(phase_name, file_pattern, image_size,
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         label = tf.one_hot(label, num_classes)
+        
         return (image, label)
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'val', 'test']:

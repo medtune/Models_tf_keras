@@ -23,10 +23,10 @@ def get_decaylr(initial_lr, decay_factor, decay_steps, global_step):
     """
     
     lr = tf.train.exponential_decay(learning_rate=initial_lr,
-                            global_step=global_step,
-                            decay_steps=decay_steps,
-                            decay_rate = decay_factor,
-                            staircase=True)
+                                    global_step=global_step,
+                                    decay_steps=decay_steps,
+                                    decay_rate = decay_factor,
+                                    staircase=True)
     tf.summary.scalar('learning_rate', lr)
     return lr
 
