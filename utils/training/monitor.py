@@ -39,3 +39,8 @@ def get_summary(model):
     for i, layer in enumerate(model.layers[1:]):
         output = layer.output
         tf.summary.histogram(layer.name, output)
+
+def get_acc(model):
+    """
+    
+    """
