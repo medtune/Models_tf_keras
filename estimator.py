@@ -77,6 +77,7 @@ def main():
     #Number of epochs for training the model
     train_spec = config.get("train")
     distribute = train_spec.get("distribute")
+    xla = train_spec.get("xla")
     num_epochs = train_spec.get("num_epochs")
     #State your batch size
     batch_size = train_spec.get("batch_size")
@@ -99,10 +100,18 @@ def main():
     tf.logging.set_verbosity(tf.logging.DEBUG)
     # Define max steps:
     max_step = num_epochs*num_batches_per_epoch
+    #Define strategy training variable
+    strategy= None
+    #Define variable for xla computations
+    jit_level = 0
     if distribute:
         strategy = tf.contrib.distribute.MirroredStrategy()
-    else:
-        strategy= None
+    if xla:
+        jit_level = tf.OptimizerOptions.ON_1
+    # Define tf.ConfigProto() as config to pass to estimator config:
+    config = tf.ConfigProto()
+    #Define optimizers options based on jit_level:
+    config.graph_options.optimizer_options.global_jit_level = jit_level
     # Define ModelConstructor instance base on the model_name:
     # input_shape and image_type are optional:
     model = base.ModelConstructor(model_name, image_type=image_type)
@@ -124,7 +133,8 @@ def main():
                                         keep_checkpoint_max=num_epochs,
                                         model_dir=train_dir,
                                         train_distribute=strategy,
-                                        eval_distribute=strategy)
+                                        eval_distribute=strategy,
+                                        session_config=config)
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     
