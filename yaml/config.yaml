@@ -10,6 +10,7 @@ model:
 
 train:
   distribute: false
+  xla : false
   batch_size: 16
   optimizer_noun: "adam"
   learning_rate: 0.0001
