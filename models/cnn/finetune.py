@@ -38,13 +38,7 @@ native_optimizers = {
     "rmsprop": tf.train.RMSPropOptimizer
 }
 
-regularizers = {
-
-}
-
-
-
-def get_loss(label_type, num_classes):
+def get_keras_loss(label_type, num_classes):
     """
     Given label_type as sparse or onehot and
     number of categories we want to train on,
@@ -56,7 +50,7 @@ def get_loss(label_type, num_classes):
         return "binary_crossentropy" 
     return "categorical_crossentropy"
 
-def get_metrics(label_type, num_classes):
+def get_keras_metrics(label_type, num_classes):
     metrics = []
     if num_classes==2:
             metrics.append(tf.keras.metrics.binary_accuracy)
@@ -101,19 +95,49 @@ def assemble(model, classifier,
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
     # as it is required
-    loss = get_loss(label_type, classifier.num_classes)
-    metrics = get_metrics(label_type, classifier.num_classes)
-
+    loss = get_keras_loss(label_type, classifier.num_classes)
+    metrics = get_keras_metrics(label_type, classifier.num_classes)
     assembly.compile(optimizer, loss, metrics)
     return assembly
 
+def assemble_modelfn(model, classifier, modelfn_inputs):
+    # Using the ModelConstructor instance, we build our CNN architecture
+    features = model.construct(modelfn_inputs)
+    logits = classifier.construct(features)
+    return logits
+
+def get_loss():
+    """
+    Return the loss to pass into the model_fn
+    function (Depending on the label_type and
+    classification task)
+    """
+    pass
+
+def get_optimizer():
+    """
+    Return the optimizer function needed during
+    the training. 
+    """
+    pass
+
+def get_modelfn():
+    """
+    This utility function provides a dynamic way
+    to construct our model (cnn + classifier) depending
+    on the desired convolutional neural network model,
+    classifier specs,
+    """
+    pass
 
 def trainable_layers():
-    """Given the defined architecture within this class, we choose
-        the non-trainable layers of the CNN model. By default, all
-        CNN layers are trainable.
-        num_trainable (Integer) represents the number of layers we want to train,
-        begining from to queue of the model and going back to the first layer of the model
+    """
+    Given the defined architecture within this class, we choose
+    the non-trainable layers of the CNN model. By default, all
+    CNN layers are trainable.
+    num_trainable (Integer) represents the number of layers we 
+    want to train, begining from to queue of the model and going 
+    back to the first layer of the model
     """
     pass
 

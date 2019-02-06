@@ -27,8 +27,10 @@ def get_model(name):
     "vgg19": keras.applications.VGG19,
     "xception": keras.applications.Xception
     }
-    """Extract the desired model from 'models'
-    dictionnary."""
+    """
+    Extract the desired model from 'models'
+    dictionnary.
+    """
     assert name in famous_cnn.keys()
     return famous_cnn.get(name)
 
@@ -61,7 +63,8 @@ def get_input_shape(name, image_type):
         "rgba": (4,)
     }
     assert name in height_width.keys()
-    return height_width.get(name)+channels.get(image_type)
+    shape = height_width.get(name)+channels.get(image_type)
+    return shape
 
 def check_args(name):
     pass
@@ -82,7 +85,6 @@ class ModelConstructor(object):
     """
     def __init__(self, name, image_type="rgb",
                 input_shape=None):
-
         #Name referring to the CNN model
         self.name = name 
         #Image type as "gray", "rgb", "rgba"
@@ -94,25 +96,22 @@ class ModelConstructor(object):
         else:
             self.input_shape = get_input_shape(name, image_type)
         #If a specific input shape is given (ex: mnist input shapes)
-        self.input_placeholder = keras.Input(self.input_shape) #Input tensor
         self.weights = self.set_weights()
-        
-    
-    def construct(self):
+        self.architecture = get_model(self.name)(input_shape=self.input_shape,
+                                    include_top=False,
+                                    weights = self.weights,
+                                    pooling=None)
+    def construct(self, inputs):
         """
         Return:
             Instance of Layer representing last layer of the CNN model
         """
         #Convolutional neural network structure
-        self.architecture = get_model(self.name)(input_shape=self.input_shape,
-                                    input_tensor=self.input_placeholder,
-                                    include_top=False,
-                                    weights = self.weights,
-                                    pooling=None)
+        output = self.architecture(inputs)
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        return self.architecture.output
+        return output
     
     def set_weights(self):
         if self.image_type=="gray":

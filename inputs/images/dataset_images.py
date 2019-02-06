@@ -1,10 +1,9 @@
 import tensorflow as tf
 import os
-
+from . import preprocessing
 
 def get_inputfn():
     pass
-
 
 
 def get_tfrecord(phase_name, file_pattern, image_size,
@@ -24,7 +23,7 @@ def get_tfrecord(phase_name, file_pattern, image_size,
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         image = _augment(image, is_training)
-        return (image, label)
+        return image, label
     # On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'valid']:
         raise ValueError('The phase_name %s is not recognized.\
@@ -43,7 +42,6 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     else:
         dataset = dataset.repeat(num_epochs)
     dataset = dataset.batch(batch_size)
-    tf.summary.image("image_summary",dataset)
     return dataset
 
 def get_flat(phase_name, file_pattern, image_size,
@@ -90,7 +88,6 @@ def get_Mura(phase_name, file_pattern, image_size,
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         image = _augment(image, is_training)
-        tf.summary.image("image_summary",image)
         return image, label
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'valid']:
@@ -106,13 +103,12 @@ def get_Mura(phase_name, file_pattern, image_size,
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
         dataset = dataset.repeat(num_epochs)    
     dataset = dataset.batch(batch_size)
-
     return dataset
 
 def get_GED(phase_name, file_pattern, image_size,
             names_to_labels, num_classes, batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
-    """Creates dataset based on phased_name(train or evaluation) for
+    """Creates dataset based on phased_name (train or evaluation) for
     rvl-cdip dataset
     """
     images_dir = os.path.dirname(file_pattern).replace("labels", "images")
@@ -126,7 +122,6 @@ def get_GED(phase_name, file_pattern, image_size,
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size[:2])
         label = tf.one_hot(label, num_classes)
-        
         return (image, label)
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'val', 'test']:
@@ -144,21 +139,6 @@ def get_GED(phase_name, file_pattern, image_size,
         dataset = dataset.repeat(num_epochs)    
     dataset = dataset.batch(batch_size)
     return dataset
-
-
-"""a = get_GED('train', "G:/rvl-cdip/labels/phase_name.txt",
-        (224,224,1),[],16,is_training=True)
-b = a.make_one_shot_iterator()
-c = b.get_next()
-d = b.get_next()
-
-with tf.Session() as sess:
-    print("aaaaa")
-    k = sess.run(c)
-    print(k)
-    k = sess.run(d)
-    print(k)"""
-
 
 
 def _augment(image, is_training=False):

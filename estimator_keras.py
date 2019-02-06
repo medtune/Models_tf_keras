@@ -7,6 +7,7 @@ from yaml import load
 from inputs.images import dataset_images
 from models.cnn import finetune, base
 from utils.training import monitor
+from tensorflow.keras.callbacks import TensorBoard
 
 def input_fn(mode, file_pattern, image_size,
             names_to_labels, num_classes, batch_size,
