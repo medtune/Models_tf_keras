@@ -5,9 +5,9 @@ from yaml import load
 
 ##New imports##
 from inputs.images import dataset_images
-from models.cnn import finetune, base
+from models.cnn import finetune
 from utils.training import monitor
-from tensorflow.keras.callbacks import TensorBoard
+
 
 def input_fn(mode, file_pattern, image_size,
             names_to_labels, num_classes, batch_size,
@@ -33,7 +33,7 @@ def input_fn(mode, file_pattern, image_size,
                                             shuffle_buffer_size=shuffle_buffer_size,
                                             is_training=train_mode)
         else:
-            dataset = dataset_images.get_GED(phase_name,
+            dataset = dataset_images.get_Mura(phase_name,
                                             file_pattern=file_pattern,
                                             image_size=image_size,
                                             names_to_labels=names_to_labels,
@@ -86,6 +86,7 @@ def main():
     optimizer_noun = train_spec.get("optimizer_noun")
     #Learning rate information and configuration
     learning_rate = train_spec.get("learning_rate")
+    
     del config
     #Calculus of batches/epoch, number of steps after decay learning rate
     num_batches_per_epoch = int(num_samples / batch_size)
@@ -95,6 +96,9 @@ def main():
     #Create log_dir:argscope_config
     if not os.path.exists(train_dir):
         os.mkdir(train_dir)
+    train_folder = os.path.join(train_dir,"train")
+    if not os.path.exists(train_folder):
+        os.mkdir(train_folder)
     #===================================================================== Training ===========================================================================#
     #Adding the graph:
     #Set the verbosity to INFO level
@@ -113,32 +117,26 @@ def main():
     config = tf.ConfigProto()
     #Define optimizers options based on jit_level:
     config.graph_options.optimizer_options.global_jit_level = jit_level
-    # Define ModelConstructor instance base on the model_name:
-    # input_shape and image_type are optional:
-    model = base.ModelConstructor(model_name, image_type=image_type)
-    #take the expected image_size by the model 
-    image_size = model.input_shape
-    # Define ModelConstructor instance base on the model_name:
-    classifier = base.Classifier(num_classes)
     # Assemble both classifier and CNN model:
     # We get a keras Model instance, and it's argument that we'll
     # pass with assembly.compile(**assembly_args) : 
-    assembly = finetune.assemble(model, classifier,
-                                optimizer_noun=optimizer_noun,
-                                learning_rate=learning_rate,
-                                distribute=distribute)
+    assembly, image_size, merge_summaries = finetune.assemble(model_name, 
+                                            image_type, 
+                                            num_classes,
+                                            optimizer_noun=optimizer_noun,
+                                            learning_rate=learning_rate,
+                                            distribute=distribute)
     assembly.summary()
-    monitor.get_summary(assembly)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,
-                                        model_dir=train_dir,
+                                        model_dir=train_folder,
                                         train_distribute=strategy,
                                         eval_distribute=strategy,
                                         session_config=config)
+    
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
-    
     #Define trainspec estimator, including max number of step for training 
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
                                                 file_pattern,
@@ -148,7 +146,13 @@ def main():
                                                 batch_size,
                                                 num_epochs,
                                                 shuffle_buffer_size=1024), 
-                                                max_steps=max_step)
+                                                max_steps=max_step,
+                                                hooks=[monitor.TrainStats(),
+                                                tf.train.SummarySaverHook(
+                                                    save_steps=100,
+                                                    output_dir=train_folder,
+                                                    summary_op=merge_summaries
+                                                )])
     #Define evalspec estimator
     eval_spec = tf.estimator.EvalSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.EVAL,
                                                     file_pattern,
@@ -160,7 +164,6 @@ def main():
                                                     shuffle_buffer_size=256))       
     #Run the training and evaluation (1 eval/epoch)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
-
 
 if __name__ == '__main__':
     main()

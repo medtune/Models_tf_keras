@@ -9,14 +9,12 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.models import Model
 from . import base
-from .base import ModelConstructor, Classifier
 from utils.training import monitor
 
 losses=["binary_crossentropy","categorical_crossentropy",
         "sparse_categorical_crossentropy",
         "mean_squared_logarithmic_error",
         "cosine_proximity"]
-
 
 keras_optimizers={
     "adadelta": tf.keras.optimizers.Adadelta,
@@ -64,12 +62,18 @@ def get_keras_metrics(label_type, num_classes):
 
     return metrics
 
-def assemble(model, classifier, 
-            optimizer_noun="adam", learning_rate=1e-4,
+def assemble(model_name, input_type, 
+            num_classes,learning_rate,
+            classification_layers=None, 
+            classification_type="multiclass",
+            activation_func = tf.nn.relu,
+            optimizer_noun="adam", 
             label_type="onehot",
             distribute=False):
+    
     """Takes a ModelConstructor instance and a Classifier instance
     We return a Model instance
+
     Args:
         model: ModelConstructor instance
         classifier: Classifier instance
@@ -78,33 +82,38 @@ def assemble(model, classifier,
         learning_rate: (optional). Float number representing the exponential learning 
         rate decay
         label_type: (optional) sparse or onehot 
+
     Return:
         A Keras Model with defined loss, optimizer and metrics.
     """
     if distribute:
         assert optimizer_noun in native_optimizers.keys()
-        optimizer = native_optimizers.get(optimizer_noun)(learning_rate)
+        assert type(learning_rate) is dict
+        initial_lr = learning_rate.get("initial")
+        #TODO:decay_lr = get_decaylr(learning_rate, global_step)
+        optimizer = native_optimizers.get(optimizer_noun)(initial_lr)
     else:
         assert optimizer_noun in keras_optimizers.keys()
-        optimizer = keras_optimizers.get(optimizer_noun)(learning_rate, decay=1e-10)
+        initial_lr = learning_rate.get("initial")
+        optimizer = keras_optimizers.get(optimizer_noun)(initial_lr, decay=1e-10)
     # Using the ModelConstructor instance, we build our CNN architecture
+    model = base.ModelConstructor(model_name, input_type)
+    #take the expected image_size by the model 
+    image_size = model.input_shape
     features = model.construct()
     # Using the features previously extracted, we also build our classifier 
+    classifier = base.Classifier(num_classes)
     logits = classifier.construct(features)
+    
     assembly = Model(inputs=model.input_placeholder, outputs=logits)
+    merge_summaries = monitor.get_summary(assembly)
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
     # as it is required
     loss = get_keras_loss(label_type, classifier.num_classes)
     metrics = get_keras_metrics(label_type, classifier.num_classes)
     assembly.compile(optimizer, loss, metrics)
-    return assembly
-
-def assemble_modelfn(model, classifier, modelfn_inputs):
-    # Using the ModelConstructor instance, we build our CNN architecture
-    features = model.construct(modelfn_inputs)
-    logits = classifier.construct(features)
-    return logits
+    return assembly, image_size, merge_summaries
 
 def get_loss():
     """
@@ -117,7 +126,8 @@ def get_loss():
 def get_optimizer():
     """
     Return the optimizer function needed during
-    the training. 
+    the training. This utility function is needed
+    when we create a model-fn for an estimator
     """
     pass
 
@@ -146,3 +156,27 @@ def add_regularizer(name, weight_decay):
     Given a name of a regularizer, 
     """
     pass
+
+def get_decaylr(lr_config, global_step):
+    """
+    Utility function to get a decayed learning rate
+
+    Args:
+        initial_lr: the initial value of learning rate
+        decay_factor: factor by which the learning rate decreases over steps
+        decay_steps: number of steps it has to wait before starting decreasing
+        the learning rate
+
+    Return:
+        Learning rate with exponential decay
+    """
+    initial_lr = lr_config.get("initial")
+    decay_steps = lr_config.get("decay_steps")
+    decay_factor= lr_config.get("decay_factor")
+    lr = tf.train.exponential_decay(learning_rate=initial_lr,
+                                    global_step=global_step,
+                                    decay_steps=decay_steps,
+                                    decay_rate = decay_factor,
+                                    staircase=True)
+    tf.summary.scalar('learning_rate', lr)
+    return lr

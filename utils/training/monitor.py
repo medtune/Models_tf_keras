@@ -9,26 +9,8 @@ It also provides utily functions to call tf.summary.xxx depending on the
 model
 """
 
-def get_decaylr(initial_lr, decay_factor, decay_steps, global_step):
-    """
-    Utility function to get a decayed
-    learning rate
-    Args:
-        initial_lr: the initial value of learning rate
-        decay_factor: factor by which the learning rate decreases over steps
-        decay_steps: number of steps it has to wait before starting decreasing
-        the learning rate
-    Return:
-        Learning rate with exponential decay
-    """
-    
-    lr = tf.train.exponential_decay(learning_rate=initial_lr,
-                                    global_step=global_step,
-                                    decay_steps=decay_steps,
-                                    decay_rate = decay_factor,
-                                    staircase=True)
-    tf.summary.scalar('learning_rate', lr)
-    return lr
+_graph = tf.get_default_graph()
+_summaries = _graph.get_collection("variables")
 
 def get_summary(model):
     """
@@ -37,10 +19,36 @@ def get_summary(model):
     """
     tf.summary.image("image", model.layers[0].output)
     for i, layer in enumerate(model.layers[1:]):
-        output = layer.output
-        tf.summary.histogram(layer.name, output)
+        tf.summary.histogram(layer.name, layer.output)
+    merge_summaries = tf.summary.merge_all() 
+    return merge_summaries
 
-def get_acc(model):
-    """
+class TrainStats(tf.train.SessionRunHook):
+    """Logs training summaries into Tensorboard """
+
+    def __init__(self):
+        """
+
+        """
+        self.graph = tf.get_default_graph()
+        self.summaries = self.graph.get_collection("summaries")
     
+    def begin(self):
+        """
+        :param session:
+            Tensorflow session
+        :param coord:
+            unused
+        """
+        pass
+
+
+class TrainLogs(tf.train.LoggingTensorHook):
     """
+    Create and stream logs to IO output
+    """
+    def __init__(self):
+        pass
+
+    def begin(self):
+        pass

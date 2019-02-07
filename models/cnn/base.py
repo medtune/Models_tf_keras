@@ -63,7 +63,7 @@ def get_input_shape(name, image_type):
         "rgba": (4,)
     }
     assert name in height_width.keys()
-    shape = height_width.get(name)+channels.get(image_type)
+    shape = height_width.get(name) + channels.get(image_type)
     return shape
 
 def check_args(name):
@@ -95,23 +95,25 @@ class ModelConstructor(object):
             self.input_shape = input_shape
         else:
             self.input_shape = get_input_shape(name, image_type)
+        self.input_placeholder = keras.layers.Input(self.input_shape)
         #If a specific input shape is given (ex: mnist input shapes)
         self.weights = self.set_weights()
-        self.architecture = get_model(self.name)(input_shape=self.input_shape,
-                                    include_top=False,
-                                    weights = self.weights,
-                                    pooling=None)
-    def construct(self, inputs):
+         
+    def construct(self):
         """
         Return:
             Instance of Layer representing last layer of the CNN model
         """
         #Convolutional neural network structure
-        output = self.architecture(inputs)
+        self.architecture = get_model(self.name)(input_shape=self.input_shape,
+                                    input_tensor=self.input_placeholder,
+                                    include_top=False,
+                                    weights = self.weights,
+                                    pooling=None)
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        return output
+        return self.architecture.output
     
     def set_weights(self):
         if self.image_type=="gray":

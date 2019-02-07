@@ -107,11 +107,10 @@ def model_fn(features, labels, mode):
     #Visualize pixel's distribution on tensorboard
     tf.summary.histogram("final_image_hist", features)
     # Define ModelConstructor instance base on the model_name:
+    last_features = base.ModelConstructor(model_name, image_type=image_type).construct(features)
     # input_shape and image_type are optional:
     # Define ModelConstructor instance base on the model_name:
-    logits = finetune.assemble_modelfn(base.ModelConstructor(model_name, image_type=image_type),
-                                       base.Classifier(num_classes),
-                                       features)
+    logits = base.Classifier(num_classes).construct(last_features)
     #Find the max of the predicted class and change its data type
     labels = labels
     if mode != tf.estimator.ModeKeys.PREDICT:
