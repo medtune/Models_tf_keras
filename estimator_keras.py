@@ -126,7 +126,6 @@ def main():
                                             optimizer_noun=optimizer_noun,
                                             learning_rate=learning_rate,
                                             distribute=distribute)
-    assembly.summary()
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,
@@ -147,12 +146,8 @@ def main():
                                                 num_epochs,
                                                 shuffle_buffer_size=1024), 
                                                 max_steps=max_step,
-                                                hooks=[monitor.TrainStats(),
-                                                tf.train.SummarySaverHook(
-                                                    save_steps=100,
-                                                    output_dir=train_folder,
-                                                    summary_op=merge_summaries
-                                                )])
+                                                hooks=[monitor.TrainStats(merge_summaries),
+                                                ])
     #Define evalspec estimator
     eval_spec = tf.estimator.EvalSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.EVAL,
                                                     file_pattern,

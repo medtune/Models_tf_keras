@@ -26,12 +26,13 @@ def get_summary(model):
 class TrainStats(tf.train.SessionRunHook):
     """Logs training summaries into Tensorboard """
 
-    def __init__(self):
+    def __init__(self, summary):
         """
 
         """
         self.graph = tf.get_default_graph()
         self.summaries = self.graph.get_collection("summaries")
+        self.summary = summary
     
     def begin(self):
         """
@@ -40,8 +41,7 @@ class TrainStats(tf.train.SessionRunHook):
         :param coord:
             unused
         """
-        pass
-
+        self.graph.add_to_collection("summaries", self.summary)
 
 class TrainLogs(tf.train.LoggingTensorHook):
     """

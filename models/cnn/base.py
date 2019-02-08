@@ -10,7 +10,6 @@ import os
 #Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier"""
 
-
 def get_model(name):
     famous_cnn = {
     "densenet121": keras.applications.DenseNet121,
@@ -110,11 +109,12 @@ class ModelConstructor(object):
                                     include_top=False,
                                     weights = self.weights,
                                     pooling=None)
+        self.architecture.build(self.input_shape)
+        print("type of architecture is: " + type(self.architecture))
         #Layer representing final features extracted from CNN model
         #The following line builds the entire model, and takes input
         #data as argument
-        return self.architecture.output
-    
+        return self.architecture
     def set_weights(self):
         if self.image_type=="gray":
             return None
@@ -164,3 +164,13 @@ class Classifier(object):
         else:
             logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
         return logits
+
+class AssembleModel(tf.keras.Model):
+    
+    def __init__(self, model_name, ):
+        pass
+    
+    def call(self,inputs):
+        pass
+
+    

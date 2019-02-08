@@ -7,7 +7,6 @@ only train the classifier (Dense neural network).
 """
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten
-from tensorflow.keras.models import Model
 from . import base
 from utils.training import monitor
 
@@ -63,15 +62,15 @@ def get_keras_metrics(label_type, num_classes):
     return metrics
 
 def assemble(model_name, input_type, 
-            num_classes,learning_rate,
+            num_classes, learning_rate,
             classification_layers=None, 
             classification_type="multiclass",
             activation_func = tf.nn.relu,
             optimizer_noun="adam", 
             label_type="onehot",
             distribute=False):
-    
-    """Takes a ModelConstructor instance and a Classifier instance
+    """
+    Takes a ModelConstructor instance and a Classifier instance
     We return a Model instance
 
     Args:
@@ -105,7 +104,7 @@ def assemble(model_name, input_type,
     classifier = base.Classifier(num_classes)
     logits = classifier.construct(features)
     
-    assembly = Model(inputs=model.input_placeholder, outputs=logits)
+    assembly = tf.keras.Model(inputs = model.input_placeholder, outputs = logits)
     merge_summaries = monitor.get_summary(assembly)
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
@@ -157,7 +156,7 @@ def add_regularizer(name, weight_decay):
     """
     pass
 
-def get_decaylr(lr_config, global_step):
+def get_decaylr(initial_lr,decay_steps,decay_factor, global_step):
     """
     Utility function to get a decayed learning rate
 
@@ -170,13 +169,9 @@ def get_decaylr(lr_config, global_step):
     Return:
         Learning rate with exponential decay
     """
-    initial_lr = lr_config.get("initial")
-    decay_steps = lr_config.get("decay_steps")
-    decay_factor= lr_config.get("decay_factor")
     lr = tf.train.exponential_decay(learning_rate=initial_lr,
                                     global_step=global_step,
                                     decay_steps=decay_steps,
-                                    decay_rate = decay_factor,
-                                    staircase=True)
+                                    decay_rate = decay_factor)
     tf.summary.scalar('learning_rate', lr)
     return lr

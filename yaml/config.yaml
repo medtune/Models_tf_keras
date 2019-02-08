@@ -9,7 +9,7 @@ model:
   name: "mobilenetv2"
 
 train:
-  distribute: True
+  distribute: False
   xla : false
   batch_size: 16
   optimizer_noun: "adam"
