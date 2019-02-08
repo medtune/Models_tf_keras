@@ -61,6 +61,9 @@ def get_keras_metrics(label_type, num_classes):
 
     return metrics
 
+
+# TODO: Delete/replace "assemble" func so that it 
+# matchs the new architecture of the package
 def assemble(model_name, input_type, 
             num_classes, learning_rate,
             classification_layers=None, 
@@ -89,31 +92,29 @@ def assemble(model_name, input_type,
         assert optimizer_noun in native_optimizers.keys()
         assert type(learning_rate) is dict
         initial_lr = learning_rate.get("initial")
-        #TODO:decay_lr = get_decaylr(learning_rate, global_step)
+        # TODO:decay_lr = get_decaylr(learning_rate, global_step)
         optimizer = native_optimizers.get(optimizer_noun)(initial_lr)
     else:
         assert optimizer_noun in keras_optimizers.keys()
         initial_lr = learning_rate.get("initial")
         optimizer = keras_optimizers.get(optimizer_noun)(initial_lr, decay=1e-10)
     # Using the ModelConstructor instance, we build our CNN architecture
-    model = base.ModelConstructor(model_name, input_type)
+    model = base.ModelConstructor(model_name, num_classes, input_type)
     #take the expected image_size by the model 
     image_size = model.input_shape
-    features = model.construct()
-    # Using the features previously extracted, we also build our classifier 
-    classifier = base.Classifier(num_classes)
-    logits = classifier.construct(features)
-    
-    assembly = tf.keras.Model(inputs = model.input_placeholder, outputs = logits)
-    merge_summaries = monitor.get_summary(assembly)
+    #This a keras Model instance
+    model_construct = model.construct()
+    merge_summaries = monitor.get_summary(model_construct)
     # Using "get_loss" func, we retrieve the loss type (loss argument accepts a noun)
     # Using "optimizers" dict, we use retrieve our optimizer, and pass the learning rate
     # as it is required
-    loss = get_keras_loss(label_type, classifier.num_classes)
-    metrics = get_keras_metrics(label_type, classifier.num_classes)
-    assembly.compile(optimizer, loss, metrics)
-    return assembly, image_size, merge_summaries
+    loss = get_keras_loss(label_type, num_classes)
+    metrics = get_keras_metrics(label_type, num_classes)
+    model_construct.compile(optimizer, loss, metrics)
+    return model_construct, image_size, merge_summaries
 
+# Function to use when constructing model_fn for
+# tf.estimator.Estimator
 def get_loss():
     """
     Return the loss to pass into the model_fn
@@ -122,6 +123,8 @@ def get_loss():
     """
     pass
 
+# Function to use when constructing model_fn for
+# tf.estimator.Estimator
 def get_optimizer():
     """
     Return the optimizer function needed during
@@ -130,6 +133,8 @@ def get_optimizer():
     """
     pass
 
+# TODO: Function to delete or change depending on the 
+# new architecture of the model
 def get_modelfn():
     """
     This utility function provides a dynamic way
@@ -139,6 +144,7 @@ def get_modelfn():
     """
     pass
 
+# TODO: Fucntion to delete or reattribute to AssembleModel class
 def trainable_layers():
     """
     Given the defined architecture within this class, we choose
@@ -150,12 +156,15 @@ def trainable_layers():
     """
     pass
 
+# TODO: Fucntion to delete or reattribute to AssembleModel class
 def add_regularizer(name, weight_decay):
     """
     Given a name of a regularizer, 
     """
     pass
 
+# Function to use when constructing model_fn for
+# tf.estimator.Estimator
 def get_decaylr(initial_lr,decay_steps,decay_factor, global_step):
     """
     Utility function to get a decayed learning rate

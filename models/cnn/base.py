@@ -82,7 +82,7 @@ class ModelConstructor(object):
     This class provides methods to construct the CNN model and define
     the trainable layers (By default, all layers are trainable)
     """
-    def __init__(self, name, image_type="rgb",
+    def __init__(self, name, num_classes, image_type="rgb",
                 input_shape=None):
         #Name referring to the CNN model
         self.name = name 
@@ -108,12 +108,7 @@ class ModelConstructor(object):
                                     input_tensor=self.input_placeholder,
                                     include_top=False,
                                     weights = self.weights,
-                                    pooling=None)
-        self.architecture.build(self.input_shape)
-        print("type of architecture is: " + type(self.architecture))
-        #Layer representing final features extracted from CNN model
-        #The following line builds the entire model, and takes input
-        #data as argument
+                                    pooling="avg")
         return self.architecture
     def set_weights(self):
         if self.image_type=="gray":
@@ -165,12 +160,25 @@ class Classifier(object):
             logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
         return logits
 
+#TODO: Instead of Downloading keras weights (.h5 format)
+# we download checkpoint from slim repository:
+# ex:inceptionv1 (http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz)
 class AssembleModel(tf.keras.Model):
     
-    def __init__(self, model_name, ):
-        pass
-    
-    def call(self,inputs):
+    def __init__(self, model_name, input_type,
+    num_classes, classification_type="multiclass",
+    classification_layers=[], activation_fun=tf.nn.relu):
+        super(AssembleModel, self).__init__()
+        self.model_name = model_name
+        self.input_type = input_type
+        self.num_classes = num_classes
+        self.classification_type = classification_type
+        assert type(classification_layers) is list
+        self.classification_layers = classification_layers
+
+
+    def call(self, inputs, training):
         pass
 
-    
+    def get_structure(self):
+        pass
