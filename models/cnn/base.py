@@ -107,8 +107,7 @@ class ModelConstructor(object):
         self.architecture = get_model(self.name)(input_shape=self.input_shape,
                                     input_tensor=self.input_placeholder,
                                     include_top=False,
-                                    weights = self.weights,
-                                    pooling="avg")
+                                    weights = self.weights)
         return self.architecture
     def set_weights(self):
         if self.image_type=="gray":
