@@ -1,10 +1,10 @@
 """ResNet, ResNetV2, and ResNeXt models for Keras.
 # Reference papers
-- [Deep Residual Learning for Image Recognition]
+- [Deep Residual Learning for Image Recognition]: ResNet
     (https://arxiv.org/abs/1512.03385) (CVPR 2016 Best Paper Award)
-- [Identity Mappings in Deep Residual Networks]
+- [Identity Mappings in Deep Residual Networks] : ResnetV2
     (https://arxiv.org/abs/1603.05027) (ECCV 2016)
-- [Aggregated Residual Transformations for Deep Neural Networks]
+- [Aggregated Residual Transformations for Deep Neural Networks] : ResNeXt
     (https://arxiv.org/abs/1611.05431) (CVPR 2017)
 # Reference implementations
 - [TensorNets]
