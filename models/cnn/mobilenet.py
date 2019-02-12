@@ -30,15 +30,186 @@ the 100 % MobileNet on various input sizes:
 """
 import tensorflow.keras as keras
 
+def _conv_block(inputs,
+                filters,
+                alpha,
+                kernel,
+                strides,
+                momentum,
+                epsilon):
+    """
+    Adds a convolutional layer to the architecture
+    
+    Args:
+        inputs: input tensor of shape (batch, height, width, channels)
+        if channels_last or (batch, channels, height, with) if channels first
+        filters : Number of output filters (How many filters are involved in
+        the convolution)
+        alpha: alpha: controls the width of the network.
+            - If `alpha` < 1.0, proportionally decreases the number
+                of filters in each layer.
+            - If `alpha` > 1.0, proportionally increases the number
+                of filters in each layer.
+            - If `alpha` = 1, default number of filters from the paper
+                 are used at each layer.
+        kernel: The size of the convolution that is used
+        strides: Strides of the convolution along height and width
+    """
+    channel_axis = 1 if keras.backend.image_data_format() == 'channels_first' else -1
+    filters = int(filters * alpha)
+    # tuple of 2 tuples of 2 ints: interpreted as ((top_pad, bottom_pad), (left_pad, right_pad))
+    x = keras.layers.ZeroPadding2D(padding=((0, 1), (0, 1)), name='conv1_pad')(inputs)
+    x = keras.layers.Conv2D(filters, kernel,
+                      padding='valid',
+                      use_bias=False,
+                      strides=strides,
+                      name='conv1')(x)
+    #Batch Normalization of the output of the conv 2D
+    x = keras.layers.BatchNormalization(axis=channel_axis,
+                                        momentum=momentum,
+                                        epsilon=epsilon,
+                                        name='conv1_bn')(x)
+    x = keras.layers.ReLU(6., name='conv1_relu')(x)
+    return x
+
+
+def _depthwise_conv(inputs,
+                    filters,
+                    alpha,
+                    depthwise_multiplier,
+                    kernel,
+                    strides,
+                    block_id,
+                    momentum,
+                    epsilon): 
+    """
+    Args:
+        filters: pointwise convolutional filters 
+        alpha: alpha: controls the width of the network.
+            - If `alpha` < 1.0, proportionally decreases the number
+                of filters in each layer.
+            - If `alpha` > 1.0, proportionally increases the number
+                of filters in each layer.
+            - If `alpha` = 1, default number of filters from the paper
+                 are used at each layer.
+        depth_multiplier: depth multiplier for depthwise convolution. This
+        is called the resolution multiplier in the MobileNet paper.
+    """
+    channel_axis = 1 if keras.backend.image_data_format() == 'channels_first' else -1
+    # Pointwise convolution:we determine the number of filter with alpha
+    pointwise_conv_filters = int(filters * alpha)
+    if strides == (1, 1):
+        x = inputs
+    else:
+        x = keras.layers.ZeroPadding2D(((0, 1), (0, 1)),
+                                 name='conv_pad_%d' % block_id)(inputs)
+    x = keras.layers.DepthwiseConv2D((3, 3),
+                               padding='same' if strides == (1, 1) else 'valid',
+                               depth_multiplier=depthwise_multiplier,
+                               strides=strides,
+                               use_bias=False,
+                               name='conv_dw_%d' % block_id)(x)
+    x = keras.layers.BatchNormalization(axis=channel_axis,
+                                        momentum=momentum,
+                                        epsilon=epsilon,
+                                        name='conv_dw_%d_bn' % block_id)(x)
+    x = keras.layers.ReLU(6., name='conv_dw_%d_relu' % block_id)(x)
+
+    x = keras.layers.Conv2D(pointwise_conv_filters, (1, 1),
+                      padding='same',
+                      use_bias=False,
+                      strides=(1, 1),
+                      name='conv_pw_%d' % block_id)(x)
+    x = keras.layers.BatchNormalization(axis=channel_axis,
+                                        momentum=momentum,
+                                        epsilon=epsilon,
+                                        name='conv_pw_%d_bn' % block_id)(x)
+    x = keras.layers.RELU(6., name='conv_pw_%d_relu')(x)
+    return x
+
 def mobilenet(inputs,
-            classes=1000,
+            alpha,
+            depthwise_multiplier=1.,
             pooling=None,
-            activation="relu",
             momentum=0.99,
             epsilon=0.001,
             include_top=False):
-
+    """
+    Args:
+        alpha: alpha: controls the width of the network.
+            - If `alpha` < 1.0, proportionally decreases the number
+                of filters in each layer.
+            - If `alpha` > 1.0, proportionally increases the number
+                of filters in each layer.
+            - If `alpha` = 1, default number of filters from the paper
+                 are used at each layer.
+        depth_multiplier: depth multiplier for depthwise convolution. This
+        is called the resolution multiplier in the MobileNet paper.
+    
+    Returns:
+        output features from convolution
+    """
     axis  = keras.backend.image_data_format()
+    if depthwise_multiplier <= 0:
+        raise ValueError('depth_multiplier is not greater than zero.')
     if axis ==  'channels_first':
         keras.backend.set_image_data_format('channels_last')
-    
+    x = _conv_block(inputs, 32, alpha, kernel=(3,3), strides=(2,2),
+                    momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 64, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=1,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 128, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(2,2), block_id=2,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 128, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=3,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 256, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(2,2), block_id=4,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 256, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=5,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(2,2), block_id=6,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=7,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=8,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=9,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=10,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=11,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 1024, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=12,
+                        momentum=momentum, epsilon=epsilon)
+
+    x = _depthwise_conv(x, 1024, alpha, depthwise_multiplier,
+                        kernel=(3,3), strides=(1,1), block_id=13,
+                        momentum=momentum, epsilon=epsilon)
+    if pooling == 'avg':
+        x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
+    elif pooling == 'max':
+        x = keras.layers.GlobalMaxPooling2D(name='max_pool')(x)
+    return x

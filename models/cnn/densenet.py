@@ -12,7 +12,7 @@ DenseNet models for Keras.
 
 import tensorflow.keras as keras
 
-def transition_block(x, reduction, name, activation="relu",
+def _transition_block(x, reduction, name, activation="relu",
                     momentum=0.99, epsilon=0.001):
     """
     Transition block defined in Densenet architecture
@@ -77,7 +77,7 @@ def conv_block(x, growth_rate, name, activation="relu",
     output = keras.layers.Concatenate(axis=axis, name=name+"_concat")([x, x_c])
     return output
 
-def dense_block(x, blocks, name):
+def _dense_block(x, blocks, name):
     """A dense block.
     # Arguments
         x: input tensor.
@@ -93,7 +93,6 @@ def dense_block(x, blocks, name):
 
 def densenet(blocks,
             inputs,
-            classes=1000,
             pooling=None,
             activation="relu",
             momentum=0.99,
@@ -105,7 +104,7 @@ def densenet(blocks,
         the number of convolutional blocks
         inputs: image input (1 or batch)
         classes: number of classes we want to train on
-        pooling: 'avg' for average 
+        pooling: 'avg' for average, 'max for max pooling
         activation: string for the activation name
         momentum: value for batch norm
         epsilon: value foir batch norm
@@ -136,13 +135,13 @@ def densenet(blocks,
     x = keras.layers.Activation(activation, name=naming+"conv1/"+activation)(x)
     x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
     x = keras.layers.MaxPooling(3, strides=2, name=naming+'pool1')(x)
-    x = dense_block(x, blocks[0], naming+'conv2')
-    x = transition_block(x, 0.5, naming+'pool2')
-    x = dense_block(x, blocks[1], naming+'conv3')
-    x = transition_block(x, 0.5, naming+'pool3')
-    x = dense_block(x, blocks[2], naming+'conv4')
-    x = transition_block(x, 0.5, naming+'pool4')
-    x = dense_block(x, blocks[3], naming+'conv5')
+    x = _dense_block(x, blocks[0], naming+'conv2')
+    x = _transition_block(x, 0.5, naming+'pool2')
+    x = _dense_block(x, blocks[1], naming+'conv3')
+    x = _transition_block(x, 0.5, naming+'pool3')
+    x = _dense_block(x, blocks[2], naming+'conv4')
+    x = _transition_block(x, 0.5, naming+'pool4')
+    x = _dense_block(x, blocks[3], naming+'conv5')
     x = keras.layers.BatchNormalization(bn_axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
@@ -155,7 +154,6 @@ def densenet(blocks,
     return x
 
 def densenet121(inputs,
-            classes=1000,
             pooling=None,
             activation="relu",
             momentum=0.99,
@@ -171,7 +169,6 @@ def densenet121(inputs,
                     include_top=include_top)
 
 def densenet169(inputs,
-            classes=1000,
             pooling=None,
             activation="relu",
             momentum=0.99,
@@ -187,7 +184,6 @@ def densenet169(inputs,
                     include_top=include_top)
 
 def densenet201(inputs,
-                classes=1000,
                 pooling=None,
                 activation="relu",
                 momentum=0.99,
@@ -203,7 +199,6 @@ def densenet201(inputs,
                     include_top=include_top)
 
 def densenet264(inputs,
-                classes=1000,
                 pooling=None,
                 activation="relu",
                 momentum=0.99,
