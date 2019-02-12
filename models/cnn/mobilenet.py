@@ -132,8 +132,7 @@ def mobilenet(inputs,
             depthwise_multiplier=1.,
             pooling=None,
             momentum=0.99,
-            epsilon=0.001,
-            include_top=False):
+            epsilon=0.001):
     """
     Args:
         alpha: alpha: controls the width of the network.

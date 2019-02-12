@@ -51,7 +51,6 @@ def _inverted_res_block(inputs,
     else:
         prefix = 'expanded_conv_'
 
-    # Depthwise
     if stride == 2:
         x = keras.layers.ZeroPadding2D(padding=correct_pad(keras.backend, x, 3),
                                  name=prefix + 'pad')(x)
@@ -66,17 +65,16 @@ def _inverted_res_block(inputs,
                                   name=prefix + 'depthwise_BN')(x)
 
     x = keras.layers.ReLU(6., name=prefix + 'depthwise_relu')(x)
-
-    # Project
     x = keras.layers.Conv2D(pointwise_filters,
                       kernel_size=1,
                       padding='same',
                       use_bias=False,
                       activation=None,
                       name=prefix + 'project')(x)
-    x = keras.layers.BatchNormalization(
-        epsilon=epsilon, momentum=momentum, name=prefix + 'project_BN')(x)
-
+    x = keras.layers.BatchNormalization(epsilon=epsilon, 
+                                        momentum=momentum, name=prefix + 'project_BN')(x)
     if in_channels == pointwise_filters and stride == 1:
         return keras.layers.Add(name=prefix + 'add')([inputs, x])
     return x
+
+def mobilenetv2()
