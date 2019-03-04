@@ -96,8 +96,7 @@ def densenet(blocks,
             pooling=None,
             activation="relu",
             momentum=0.99,
-            epsilon=0.001,
-            include_top=False):
+            epsilon=0.001):
     """
     Args:
         blocks: list of integer, each element represents
@@ -113,15 +112,15 @@ def densenet(blocks,
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     if blocks == [6, 12, 24, 16]:
-        naming = 'densenet121'
+        naming = 'densenet121/'
     elif blocks == [6, 12, 32, 32]:
-        naming = 'densenet169'
+        naming = 'densenet169/'
     elif blocks == [6, 12, 48, 32]:
-        naming = 'densenet201'
+        naming = 'densenet201/'
     elif blocks == [6, 12, 64, 48]:
-        naming= 'densenet264'
+        naming= 'densenet264/'
     else:
-        naming = 'densenet'
+        naming = 'densenet/'
     
     x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)
     x = keras.layers.Conv2D(64, 7, 
@@ -157,58 +156,49 @@ def densenet121(inputs,
             pooling=None,
             activation="relu",
             momentum=0.99,
-            epsilon=0.001,
-            include_top=False):
+            epsilon=0.001):
     return densenet([6,12,24,16],
                     inputs,
                     pooling=pooling,
                     activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon,
-                    include_top=include_top)
+                    epsilon=epsilon)
 
 def densenet169(inputs,
             pooling=None,
             activation="relu",
             momentum=0.99,
-            epsilon=0.001,
-            include_top=False):
+            epsilon=0.001):
     return densenet([6, 12, 32, 32],
                     inputs,
-                    classes=classes,
                     pooling=pooling,
                     activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon,
-                    include_top=include_top)
+                    epsilon=epsilon)
 
 def densenet201(inputs,
                 pooling=None,
                 activation="relu",
                 momentum=0.99,
-                epsilon=0.001,
-                include_top=False):
+                epsilon=0.001):
     return densenet([6, 12, 48, 32],
                     inputs,
                     pooling=pooling,
                     activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon,
-                    include_top=include_top)
+                    epsilon=epsilon)
 
 def densenet264(inputs,
                 pooling=None,
                 activation="relu",
                 momentum=0.99,
-                epsilon=0.001,
-                include_top=False):
+                epsilon=0.001):
     return densenet([6, 12, 64, 48],
                     inputs,
                     pooling=pooling,
                     activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon,
-                    include_top=include_top)
+                    epsilon=epsilon)
 
 setattr(densenet121, '__doc__', densenet.__doc__)
 setattr(densenet169, '__doc__', densenet.__doc__)

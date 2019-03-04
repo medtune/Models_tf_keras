@@ -20,9 +20,13 @@ architectures  = {
     "densenet169": densenet.densenet169,
     "densenet201": densenet.densenet201,
     "densenet264": densenet.densenet264,
+    "mobilenet": mobilenet.mobilenet,
+    "mobilenetv2": mobilenetv2.mobilenetv2,
+    "vgg16": vgg16.vgg16,
+    "vgg19": vgg19.vgg19
     }
 
-def correct_pad(backend, inputs, kernel_size):
+def correct_pad(inputs, kernel_size):
     """Returns a tuple for zero-padding for 2D convolution with downsampling.
     # Arguments
         input_size: An integer or tuple/list of 2 integers.
@@ -30,8 +34,8 @@ def correct_pad(backend, inputs, kernel_size):
     # Returns
         A tuple.
     """
-    img_dim = 2 if backend.image_data_format() == 'channels_first' else 1
-    input_size = backend.int_shape(inputs)[img_dim:(img_dim + 2)]
+    img_dim = 2 if keras.backend.image_data_format() == 'channels_first' else 1
+    input_size = keras.backend.int_shape(inputs)[img_dim:(img_dim + 2)]
 
     if isinstance(kernel_size, int):
         kernel_size = (kernel_size, kernel_size)

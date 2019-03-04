@@ -18,3 +18,29 @@
 -  [keras_applications]
     https://github.com/keras-team/keras-applications/blob/master/keras_applications/resnet_common.py
 """
+import tensorflow.keras as keras
+
+def _identity_block(input_tensor, kernel_size, id, name_prefix):
+    """
+    Arguments:
+        - input tensor : tensor from the previous layer
+        - kernel_size 
+        - id : id of the current block, useful for wreiting layer
+        scope
+        - name_prefix : name_prefix to add to layer scope
+    """
+    pass
+
+
+
+
+def _conv_block():
+    pass
+
+def resNet(inputs,
+            pooling=None,
+            activation="relu",
+            momentum=0.99,
+            epsilon=0.001):
+
+    axis = 3 if keras.backend.image_data_format() == 'channels_last' else 1

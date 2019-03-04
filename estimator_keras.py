@@ -44,6 +44,7 @@ def input_fn(mode, file_pattern, image_size,
                                             is_training=train_mode)
     return dataset 
 
+
 def main():
     #Open and read the yaml file:
     cwd = os.getcwd()
@@ -117,8 +118,11 @@ def main():
     config = tf.ConfigProto()
     #Define optimizers options based on jit_level:
     config.graph_options.optimizer_options.global_jit_level = jit_level
-    # Assemble both classifier and CNN model:
-    # We get a keras Model instance, and it's argument that we'll
+
+    #TODO: The following lines are to be modified/deleted. We construct
+    # a classifier using tf.keras.layers and connect it with the feature
+    # extractor. Then we pass it to model_fn
+
     # pass with assembly.compile(**assembly_args) : 
     assembly, image_size, merge_summaries = finetune.assemble(model_name, 
                                             image_type, 
@@ -133,7 +137,9 @@ def main():
                                         train_distribute=strategy,
                                         eval_distribute=strategy,
                                         session_config=config)
-    
+    #TODO: Replace keras top estimator by a get_model_fn function, located in
+    # models.cnn.finetune. 
+
     #Turn the Keras model to an estimator, so we can use Estimator API
     estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     #Define trainspec estimator, including max number of step for training 

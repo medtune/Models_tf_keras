@@ -36,7 +36,8 @@ def _conv_block(inputs,
                 kernel,
                 strides,
                 momentum,
-                epsilon):
+                epsilon,
+                name_prefix):
     """
     Adds a convolutional layer to the architecture
     
@@ -58,18 +59,19 @@ def _conv_block(inputs,
     channel_axis = 1 if keras.backend.image_data_format() == 'channels_first' else -1
     filters = int(filters * alpha)
     # tuple of 2 tuples of 2 ints: interpreted as ((top_pad, bottom_pad), (left_pad, right_pad))
-    x = keras.layers.ZeroPadding2D(padding=((0, 1), (0, 1)), name='conv1_pad')(inputs)
+    x = keras.layers.ZeroPadding2D(padding=((0, 1), (0, 1)),
+                                name=name_prefix+'conv1_pad')(inputs)
     x = keras.layers.Conv2D(filters, kernel,
                       padding='valid',
                       use_bias=False,
                       strides=strides,
-                      name='conv1')(x)
+                      name=name_prefix+'conv1')(x)
     #Batch Normalization of the output of the conv 2D
     x = keras.layers.BatchNormalization(axis=channel_axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
-                                        name='conv1_bn')(x)
-    x = keras.layers.ReLU(6., name='conv1_relu')(x)
+                                        name=name_prefix+'conv1_bn')(x)
+    x = keras.layers.ReLU(6., name=name_prefix+'conv1_relu')(x)
     return x
 
 
@@ -81,7 +83,8 @@ def _depthwise_conv(inputs,
                     strides,
                     block_id,
                     momentum,
-                    epsilon): 
+                    epsilon,
+                    name_prefix): 
     """
     Args:
         filters: pointwise convolutional filters 
@@ -102,34 +105,34 @@ def _depthwise_conv(inputs,
         x = inputs
     else:
         x = keras.layers.ZeroPadding2D(((0, 1), (0, 1)),
-                                 name='conv_pad_%d' % block_id)(inputs)
+                                 name=name_prefix+'conv_pad_%d' % block_id)(inputs)
     x = keras.layers.DepthwiseConv2D((3, 3),
                                padding='same' if strides == (1, 1) else 'valid',
                                depth_multiplier=depthwise_multiplier,
                                strides=strides,
                                use_bias=False,
-                               name='conv_dw_%d' % block_id)(x)
+                               name=name_prefix+'conv_dw_%d' % block_id)(x)
     x = keras.layers.BatchNormalization(axis=channel_axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
-                                        name='conv_dw_%d_bn' % block_id)(x)
-    x = keras.layers.ReLU(6., name='conv_dw_%d_relu' % block_id)(x)
+                                        name=name_prefix+'conv_dw_%d_bn' % block_id)(x)
+    x = keras.layers.ReLU(6., name=name_prefix+'conv_dw_%d_relu' % block_id)(x)
 
     x = keras.layers.Conv2D(pointwise_conv_filters, (1, 1),
                       padding='same',
                       use_bias=False,
                       strides=(1, 1),
-                      name='conv_pw_%d' % block_id)(x)
+                      name=name_prefix+'conv_pw_%d' % block_id)(x)
     x = keras.layers.BatchNormalization(axis=channel_axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
-                                        name='conv_pw_%d_bn' % block_id)(x)
-    x = keras.layers.RELU(6., name='conv_pw_%d_relu')(x)
+                                        name=name_prefix+'conv_pw_%d_bn' % block_id)(x)
+    x = keras.layers.RELU(6., name=name_prefix+'conv_pw_%d_relu')(x)
     return x
 
 def mobilenet(inputs,
-            alpha,
-            depthwise_multiplier=1.,
+            alpha=1.0,
+            depthwise_multiplier=1,
             pooling=None,
             momentum=0.99,
             epsilon=0.001):
@@ -146,69 +149,73 @@ def mobilenet(inputs,
         is called the resolution multiplier in the MobileNet paper.
     
     Returns:
-        output features from convolution
+        output features from Mobilenet model
     """
+    naming = 'mobilenet'
     axis  = keras.backend.image_data_format()
     if depthwise_multiplier <= 0:
         raise ValueError('depth_multiplier is not greater than zero.')
+    if alpha not in [0.25, 0.50, 0.75, 1.0]:
+        raise ValueError('alpha can be one of'
+                        '`0.25`, `0.50`, `0.75` or `1.0` only.')
     if axis ==  'channels_first':
         keras.backend.set_image_data_format('channels_last')
     x = _conv_block(inputs, 32, alpha, kernel=(3,3), strides=(2,2),
-                    momentum=momentum, epsilon=epsilon)
+                    momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 64, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=1,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 128, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(2,2), block_id=2,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 128, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=3,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 256, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(2,2), block_id=4,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 256, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=5,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(2,2), block_id=6,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=7,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=8,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=9,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=10,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 512, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=11,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 1024, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=12,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
 
     x = _depthwise_conv(x, 1024, alpha, depthwise_multiplier,
                         kernel=(3,3), strides=(1,1), block_id=13,
-                        momentum=momentum, epsilon=epsilon)
+                        momentum=momentum, epsilon=epsilon, name_prefix=naming)
     if pooling == 'avg':
-        x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
     elif pooling == 'max':
-        x = keras.layers.GlobalMaxPooling2D(name='max_pool')(x)
+        x = keras.layers.GlobalMaxPooling2D(name=naming+'max_pool')(x)
     return x
