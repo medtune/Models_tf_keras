@@ -2,10 +2,6 @@ import tensorflow as tf
 import os
 from . import preprocessing
 
-def get_inputfn():
-    pass
-
-
 def get_tfrecord(phase_name, file_pattern, image_size,
                 names_to_labels, num_classes, batch_size=32, num_epochs=-1,
                 shuffle_buffer_size=1024, is_training=False):
