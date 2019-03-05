@@ -23,35 +23,38 @@ native_optimizers = {
     "rmsprop": tf.train.RMSPropOptimizer
 }
 
-def get_input_shape(name, image_type):
+# Dictionnary that contain the default
+# height and width for each model name
+height_width = {
+"densenet121": (224,224),
+"densenet169": (224,224),
+"densenet201": (224,224),
+"densenet264": (224,224),
+"inceptionv3": (299,299),
+"inception_resnet_v2": (299,299),
+"mobilenet": (224,224),
+"mobilenetv2": (224,224),
+"nasnet_mobile": (224,224),
+"nasnet_large": (331,331),
+"resnet": (224,224),
+"vgg16": (224,224),
+"vgg19": (224,224),
+"xception": (299,299)
+}
+
+channels = {
+    "gray": (1,),
+    "rgb": (3,),
+    "rgba": (4,)
+}
+
+def get_default_shape(name, image_type):
     """
     Based on the model's name and the image type
     (grayscale, RGB, RGBA), the function returns
     a tuple of 3 dims representing the input shape
     """
-    #Dictionnary that contain the default
-    #height and width for each model name
-    height_width = {
-    "densenet121": (224,224),
-    "densenet169": (224,224),
-    "densenet201": (224,224),
-    "densenet264": (224,224),
-    "inceptionv3": (299,299),
-    "inception_resnet_v2": (299,299),
-    "mobilenet": (224,224),
-    "mobilenetv2": (224,224),
-    "nasnet_mobile": (224,224),
-    "nasnet_large": (331,331),
-    "resnet": (224,224),
-    "vgg16": (224,224),
-    "vgg19": (224,224),
-    "xception": (299,299)
-    }
-    channels = {
-        "gray": (1,),
-        "rgb": (3,),
-        "rgba": (4,)
-    }
+    
     assert name in height_width.keys()
     shape = height_width.get(name) + channels.get(image_type)
     return shape
@@ -144,6 +147,8 @@ class AssembleModel():
                 * learning_rate : initial, decay_factor and before_decay to define the
                 a decayed learning rate
                 * activation_func : name of activation function we want to use
+                * num_samples : number of training examples. Used to define a decay learning rate
+                * batch_size : integer representing number of examples per batch 
         """
         # Get the CNN model base on the given name
         self.modelName = params["model_name"]
@@ -179,6 +184,15 @@ class AssembleModel():
             A dict containing the value of each hyperparameter
         """
         pass
+    
+    def get_modelName(self):
+        return self.modelName
+
+    def get_inputType(self):
+        return self.input_type
+
+    def get_numClasses(self):
+        return self.numClasses
 
     def  model_fn(self, features, labels, mode):
         """
@@ -188,8 +202,7 @@ class AssembleModel():
             - features : batch of images as input
             - labels : batch of labels (true prediction)
             - mode : train, eval or predict. (ref to Estimator docs)
-            
-                
+
         # Return : 
             model_fn function
         """
