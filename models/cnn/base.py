@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.layers import Dense, Flatten
-
+from . import famous_cnn
 import os
 
 """Models have the same arguments: 
@@ -10,28 +10,15 @@ import os
 #Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier"""
 
-def get_model(name):
-    famous_cnn = {
-    "densenet121": keras.applications.DenseNet121,
-    "densenet169": keras.applications.DenseNet169,
-    "densenet201": keras.applications.DenseNet201,
-    "inceptionv3": keras.applications.InceptionV3,
-    "inception_resnet_v2": keras.applications.InceptionResNetV2,
-    "mobilenet": keras.applications.MobileNet,
-    "mobilenetv2": keras.applications.MobileNetV2,
-    "nasnet_mobile": keras.applications.NASNetMobile,
-    "nasnet_large": keras.applications.NASNetLarge,
-    "resnet": keras.applications.ResNet50,
-    "vgg16": keras.applications.VGG16,
-    "vgg19": keras.applications.VGG19,
-    "xception": keras.applications.Xception
-    }
-    """
-    Extract the desired model from 'models'
-    dictionnary.
-    """
-    assert name in famous_cnn.keys()
-    return famous_cnn.get(name)
+native_optimizers = {
+    "adadelta": tf.train.AdadeltaOptimizer,
+    "adagrad": tf.train.AdagradOptimizer,
+    "adam": tf.train.AdamOptimizer,
+    "ftrl": tf.train.FtrlOptimizer,
+    "sgd": tf.train.GradientDescentOptimizer,
+    "momentum": tf.train.MomentumOptimizer,
+    "rmsprop": tf.train.RMSPropOptimizer
+}
 
 def get_input_shape(name, image_type):
     """
@@ -45,6 +32,7 @@ def get_input_shape(name, image_type):
     "densenet121": (224,224),
     "densenet169": (224,224),
     "densenet201": (224,224),
+    "densenet264": (224,224),
     "inceptionv3": (299,299),
     "inception_resnet_v2": (299,299),
     "mobilenet": (224,224),
@@ -65,65 +53,15 @@ def get_input_shape(name, image_type):
     shape = height_width.get(name) + channels.get(image_type)
     return shape
 
-def check_args(name):
-    pass
-
-def print_layers_names(name):
-    """
-    Utility function to quickly visualize
-    each layer name
-    """
-    model = get_model(name)
-    for i, layer in enumerate(model.layers):
-        print(i, layer.name)
-
-class ModelConstructor(object):
-    """
-    This class provides methods to construct the CNN model and define
-    the trainable layers (By default, all layers are trainable)
-    """
-    def __init__(self, name, num_classes, image_type="rgb",
-                input_shape=None):
-        #Name referring to the CNN model
-        self.name = name 
-        #Image type as "gray", "rgb", "rgba"
-        self.image_type = image_type
-        #Check if we got an input shape different from dafault shape
-        # (ex: mnist input shape)
-        if input_shape:
-            self.input_shape = input_shape
-        else:
-            self.input_shape = get_input_shape(name, image_type)
-        self.input_placeholder = keras.layers.Input(self.input_shape)
-        #If a specific input shape is given (ex: mnist input shapes)
-        self.weights = self.set_weights()
-         
-    def construct(self):
-        """
-        Return:
-            Instance of Layer representing last layer of the CNN model
-        """
-        #Convolutional neural network structure
-        self.architecture = get_model(self.name)(input_shape=self.input_shape,
-                                    input_tensor=self.input_placeholder,
-                                    include_top=False,
-                                    weights = self.weights)
-        return self.architecture
-    def set_weights(self):
-        if self.image_type=="gray":
-            return None
-        return "imagenet"
-
-
 class Classifier(object):
     """
     Multiclass classification makes the assumption that each sample is assigned to one and only one label
     Multilabel classification assigns to each sample a set of target labels
     """
     def __init__(self, num_classes,
-                classification_layers=None, 
-                classification_type="multiclass",
-                activation_func=tf.nn.relu):
+                classification_type,
+                classification_layers, 
+                activation_func):
         """
         Args:
             features: A Layer instance representing the last layer of a CNN model
@@ -135,10 +73,14 @@ class Classifier(object):
         """
         #Classification_type refers to the definition above
         self.classification_type = classification_type
+        assert type(classification_layers) is list
         self.classification_layers = classification_layers
         #It also accepts features coming from the last layer of the CNN
         self.num_classes = num_classes
-        self.activation = activation_func #define the activation function 
+        # Check if module has this func
+        if hasattr(tf.nn, activation_func):
+            #define the activation function 
+            self.activation = getattr(tf.nn, activation_func) 
     
     def construct(self, features):
         """
@@ -162,22 +104,71 @@ class Classifier(object):
 #TODO: Instead of Downloading keras weights (.h5 format)
 # we download checkpoint from slim repository:
 # ex:inceptionv1 (http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz)
-class AssembleModel(tf.keras.Model):
-    
+class AssembleModel():
+
     def __init__(self, model_name, input_type,
     num_classes, classification_type="multiclass",
-    classification_layers=[], activation_fun=tf.nn.relu):
+    classification_layers=[], activation_func="relu"):
         super(AssembleModel, self).__init__()
-        self.model_name = model_name
+        # Get the CNN model base on the given name
+        self.cnn_model = famous_cnn.architectures.get(model_name)
+        # Define the image type : 'Grayscale' or 'RGB'
         self.input_type = input_type
-        self.num_classes = num_classes
-        self.classification_type = classification_type
-        assert type(classification_layers) is list
-        self.classification_layers = classification_layers
+        # Define the classifier as an instance of Classifier:
+        self.classifier = Classifier(num_classes,
+                                    classification_type,
+                                    classification_layers,
+                                    activation_func)
 
+    def call(self, inputs):
+        features = self.cnn_model(inputs)
+        logits = self.classifier.construct(features)
+        return logits
 
-    def call(self, inputs, training):
+    def get_hyperparams(self):
+        """
+        Using stdio inputs, we ask the user to define
+        a value for each hyperparameter of the model, depending on the
+        CNN model that is used (epsilon, batch_norm, alpha for mobilenet &
+        mobilenetv2)
+        # Return : 
+            A dict containing the value of each hyperparameter
+        """
+        pass
+    
+    def get_loss_function(self):
+        """
+        Depending on the number of classes and the classification type,
+        we return the loss function that we will pass into
+        model_fn
+        """
         pass
 
-    def get_structure(self):
-        pass
+
+
+
+def  model_fn(features, labels, mode, params):
+    """
+    Model_fn function that we will pass to the 
+    estimator.
+    # Arguments :
+        - features : batch of images as input
+        - labels : batch of labels (true prediction)
+        - mode : train, eval or predict. (ref to Estimator docs)
+        - params : from the configuration file, we take the following params as
+        dicts :
+            * image_type : input type ('rgb' or 'gray')
+            * model.name : model name to pass to the AssembleModel
+            * num_classes : number of classes 
+            * classification : includes the classification type and the layers to construct
+            * optimizer_noun : the optimizer function we want to use during training
+            * learning_rate : initial, decay_factor and before_decay to define the
+            a decayed learning rate
+            
+    # Return : 
+        model_fn function
+    """
+    model = AssembleModel(params["model_name"], params["image_type"],
+                        params["num_classes"], params["classification_type"],
+                        params["activation_func"])
+    logits = model.call(features["image"])

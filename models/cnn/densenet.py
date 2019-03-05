@@ -93,7 +93,7 @@ def _dense_block(x, blocks, name):
 
 def densenet(blocks,
             inputs,
-            pooling=None,
+            pooling,
             activation="relu",
             momentum=0.99,
             epsilon=0.001):
@@ -153,7 +153,7 @@ def densenet(blocks,
     return x
 
 def densenet121(inputs,
-            pooling=None,
+            pooling='avg',
             activation="relu",
             momentum=0.99,
             epsilon=0.001):
@@ -165,7 +165,7 @@ def densenet121(inputs,
                     epsilon=epsilon)
 
 def densenet169(inputs,
-            pooling=None,
+            pooling='avg',
             activation="relu",
             momentum=0.99,
             epsilon=0.001):
@@ -177,7 +177,7 @@ def densenet169(inputs,
                     epsilon=epsilon)
 
 def densenet201(inputs,
-                pooling=None,
+                pooling='avg',
                 activation="relu",
                 momentum=0.99,
                 epsilon=0.001):
@@ -189,7 +189,7 @@ def densenet201(inputs,
                     epsilon=epsilon)
 
 def densenet264(inputs,
-                pooling=None,
+                pooling='avg',
                 activation="relu",
                 momentum=0.99,
                 epsilon=0.001):
