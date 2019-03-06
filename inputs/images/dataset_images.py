@@ -143,3 +143,39 @@ def _augment(image, is_training=False):
     the case: train or validation set of data
     """
     return image
+
+
+def input_fn(mode, file_pattern, image_size,
+            names_to_labels, num_classes, batch_size,
+            num_epochs, shuffle_buffer_size):
+    train_mode = mode==tf.estimator.ModeKeys.TRAIN
+    with tf.name_scope("dataset"):
+        phase_name = "train" if train_mode else "val"
+        if os.sep in file_pattern:
+            # We first split file_pattern given the os seperator
+            # Then split the last element of the resulting list
+            # using dot separator
+            file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
+        else:
+            file_type = file_pattern.split(".")[-1]
+        if file_type=="tfrecord":
+            dataset = dataset_images.get_tfrecord(phase_name,
+                                            file_pattern=file_pattern,
+                                            image_size=image_size,
+                                            names_to_labels=names_to_labels,
+                                            num_classes=num_classes,
+                                            batch_size=batch_size,
+                                            num_epochs=num_epochs,
+                                            shuffle_buffer_size=shuffle_buffer_size,
+                                            is_training=train_mode)
+        else:
+            dataset = dataset_images.get_Mura(phase_name,
+                                            file_pattern=file_pattern,
+                                            image_size=image_size,
+                                            names_to_labels=names_to_labels,
+                                            num_classes=num_classes,
+                                            batch_size=batch_size,
+                                            num_epochs=num_epochs,
+                                            shuffle_buffer_size=shuffle_buffer_size,
+                                            is_training=train_mode)
+    return dataset

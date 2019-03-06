@@ -5,45 +5,7 @@ from yaml import load
 
 ##New imports##
 from inputs.images import dataset_images
-from models.cnn import finetune
 from utils.training import monitor
-
-
-def input_fn(mode, file_pattern, image_size,
-            names_to_labels, num_classes, batch_size,
-            num_epochs, shuffle_buffer_size):
-    train_mode = mode==tf.estimator.ModeKeys.TRAIN
-    with tf.name_scope("dataset"):
-        phase_name = "train" if train_mode else "val"
-        if os.sep in file_pattern:
-            # We first split file_pattern given the os seperator
-            # Then split the last element of the resulting list
-            # using dot separator
-            file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
-        else:
-            file_type = file_pattern.split(".")[-1]
-        if file_type=="tfrecord":
-            dataset = dataset_images.get_tfrecord(phase_name,
-                                            file_pattern=file_pattern,
-                                            image_size=image_size,
-                                            names_to_labels=names_to_labels,
-                                            num_classes=num_classes,
-                                            batch_size=batch_size,
-                                            num_epochs=num_epochs,
-                                            shuffle_buffer_size=shuffle_buffer_size,
-                                            is_training=train_mode)
-        else:
-            dataset = dataset_images.get_Mura(phase_name,
-                                            file_pattern=file_pattern,
-                                            image_size=image_size,
-                                            names_to_labels=names_to_labels,
-                                            num_classes=num_classes,
-                                            batch_size=batch_size,
-                                            num_epochs=num_epochs,
-                                            shuffle_buffer_size=shuffle_buffer_size,
-                                            is_training=train_mode)
-    return dataset 
-
 
 def main():
     #Open and read the yaml file:
@@ -123,13 +85,6 @@ def main():
     # a classifier using tf.keras.layers and connect it with the feature
     # extractor. Then we pass it to model_fn
 
-    # pass with assembly.compile(**assembly_args) : 
-    assembly, image_size, merge_summaries = finetune.assemble(model_name, 
-                                            image_type, 
-                                            num_classes,
-                                            optimizer_noun=optimizer_noun,
-                                            learning_rate=learning_rate,
-                                            distribute=distribute)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=num_batches_per_epoch,
                                         keep_checkpoint_max=num_epochs,
@@ -139,9 +94,6 @@ def main():
                                         session_config=config)
     #TODO: Replace keras top estimator by a get_model_fn function, located in
     # models.cnn.finetune. 
-
-    #Turn the Keras model to an estimator, so we can use Estimator API
-    estimator = tf.keras.estimator.model_to_estimator(assembly, config=run_config)
     #Define trainspec estimator, including max number of step for training 
     train_spec = tf.estimator.TrainSpec(input_fn=lambda:input_fn(tf.estimator.ModeKeys.TRAIN,
                                                 file_pattern,
