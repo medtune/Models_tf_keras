@@ -43,4 +43,4 @@ def resNet(inputs,
             momentum=0.99,
             epsilon=0.001):
 
-    axis = 3 if keras.backend.image_data_format() == 'channels_last' else 1
+    pass
