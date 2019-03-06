@@ -4,7 +4,7 @@ from . import default_parameters
 
 def decode(yamlFilename):
     """
-    Returns dataset configuration, model configuration,
+    Returns dataset configurations, model configurations,
     and training configurations
     """
     with open(yamlFilename) as stream:
@@ -15,6 +15,8 @@ def decode(yamlFilename):
     model_spec = getModelFnSpec(dataset_spec, train_spec, model_spec)
     dataset_spec = getInputFnSpec(dataset_spec, train_spec, model_spec["name"])
     device_spec = train_spec
+    print(dataset_spec)
+    print(model_spec)
     print(device_spec)
     return dataset_spec, model_spec, device_spec
 
@@ -77,7 +79,6 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
                                 configuration'%(tag))
     dataSpec["image_size"] = default_parameters.get_default_shape(modelName)
     dataSpec["image_channels"] = default_parameters.get_default_channels(dataSpec["image_type"])
-    
     return dataSpec
 
 def NamesToLabels(labelFile):
@@ -88,13 +89,11 @@ def NamesToLabels(labelFile):
     """
     with open(labelFile) as f:
         labels = f.readlines()
-    
     # Dict mapping label names to integer values :
     namesToInt = dict.fromkeys(labels, "und")
     # Dict mapping integer to strings : 
     intList = [i for i in range(len(labels))]
     intToNames = dict(zip(intList, labels))
-
     return namesToInt, intToNames
 
 def setDeviceConfig(distributionStrategy, xlaStrategy):
