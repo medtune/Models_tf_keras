@@ -213,7 +213,7 @@ class AssembleModel():
                 #Create the global step for monitoring the learning_rate and training:
                 global_step = tf.train.get_or_create_global_step()
                 with tf.name_scope("learning_rate"):    
-                    lr = tf.train.exponential_decay(learning_rate=self.learningRate["initial_learning_rate"],
+                    lr = tf.train.exponential_decay(learning_rate=self.learningRate["initial"],
                                             global_step=global_step,
                                             decay_steps=self.decay_steps,
                                             decay_rate = self.learningRate["decay_factor"],
