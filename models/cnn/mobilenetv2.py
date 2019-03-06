@@ -222,6 +222,6 @@ def mobilenetv2(inputs,
     if pooling == 'avg':
         x_final = keras.layers.GlobalAveragePooling2D()(x_final)
     else:
-        x_final = keras.layers.GLobalMaxPool2D()(x_final)
+        x_final = keras.layers.GlobalMaxPool2D()(x_final)
     
     return x_final
