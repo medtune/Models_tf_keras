@@ -2,8 +2,8 @@ import tensorflow as tf
 import os
 from . import preprocessing
 
-def get_tfrecord(phase_name, file_pattern, image_size,
-                names_to_labels, num_classes, batch_size=32, num_epochs=-1,
+def get_tfrecord(phase_name, file_pattern, image_size, num_classes, 
+                batch_size = 32, num_epochs = 1,
                 shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), datatset_dir."""
     def _parse_fn(example, is_training=is_training):
@@ -40,8 +40,8 @@ def get_tfrecord(phase_name, file_pattern, image_size,
     dataset = dataset.batch(batch_size)
     return dataset
 
-def get_flat(phase_name, file_pattern, image_size,
-            names_to_labels, num_classes, batch_size=32, num_epochs=-1,
+def get_flat(phase_name, file_pattern, image_size, num_classes, 
+            batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name(train or evaluation), """
     def _parse_fn(filename):
@@ -76,7 +76,7 @@ def get_Mura(phase_name, file_pattern, image_size,
     def _parse_fn(filename):
         #Create the keys_to_features dictionary for the decoder    
         filename_split = tf.string_split([filename], delimiter=os.sep).values
-        #NOTE:The Following line is an efficient way of extracting label for MURA
+        #NOTE:The Following line is a way of extracting label for MURA
         #(ex: \data\MURA-v1.1\train\XR_ELBOW\patient00011\study1_negative\image.png)
         label = tf.string_split([filename_split[-2]], delimiter = "_").values[-1]
         label = tf.one_hot(table.lookup(label), num_classes)
@@ -102,7 +102,7 @@ def get_Mura(phase_name, file_pattern, image_size,
     return dataset
 
 def get_GED(phase_name, file_pattern, image_size,
-            names_to_labels, num_classes, batch_size=32, num_epochs=-1,
+            num_classes, batch_size=32, num_epochs=-1,
             shuffle_buffer_size=1024, is_training=False):
     """Creates dataset based on phased_name (train or evaluation) for
     rvl-cdip dataset
@@ -145,37 +145,38 @@ def _augment(image, is_training=False):
     return image
 
 
-def input_fn(mode, file_pattern, image_size,
-            names_to_labels, num_classes, batch_size,
-            num_epochs, shuffle_buffer_size):
+def get_input_fn(mode, datasetSpecs):
     train_mode = mode==tf.estimator.ModeKeys.TRAIN
+    file_pattern = os.path.join(datasetSpecs.get("dataset_dir"), 
+                                datasetSpecs.get("file_pattern")) 
     with tf.name_scope("dataset"):
         phase_name = "train" if train_mode else "val"
-        if os.sep in file_pattern:
-            # We first split file_pattern given the os seperator
-            # Then split the last element of the resulting list
-            # using dot separator
-            file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
-        else:
-            file_type = file_pattern.split(".")[-1]
+
+        # We first split file_pattern given the os seperator
+        # Then split the last element of the resulting list
+        # using dot separator
+        file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
+
         if file_type=="tfrecord":
-            dataset = dataset_images.get_tfrecord(phase_name,
-                                            file_pattern=file_pattern,
-                                            image_size=image_size,
-                                            names_to_labels=names_to_labels,
-                                            num_classes=num_classes,
-                                            batch_size=batch_size,
-                                            num_epochs=num_epochs,
-                                            shuffle_buffer_size=shuffle_buffer_size,
-                                            is_training=train_mode)
+            def input_fn():
+                dataset = get_tfrecord(phase_name,
+                                        file_pattern=file_pattern,
+                                        image_size=datasetSpecs.get("image_size"),
+                                        num_classes=datasetSpecs.get("num_classes"),
+                                        batch_size=datasetSpecs.get("batch_size"),
+                                        num_epochs=datasetSpecs.get("num_epochs"),
+                                        shuffle_buffer_size=datasetSpecs.get("shuffle_buffer_size"),
+                                        is_training=train_mode)
+                return dataset
         else:
-            dataset = dataset_images.get_Mura(phase_name,
-                                            file_pattern=file_pattern,
-                                            image_size=image_size,
-                                            names_to_labels=names_to_labels,
-                                            num_classes=num_classes,
-                                            batch_size=batch_size,
-                                            num_epochs=num_epochs,
-                                            shuffle_buffer_size=shuffle_buffer_size,
-                                            is_training=train_mode)
-    return dataset
+            def input_fn():
+                dataset = get_GED(phase_name,
+                                    file_pattern=file_pattern,
+                                    image_size=datasetSpecs.get("image_size"),
+                                    num_classes=datasetSpecs.get("num_classes"),
+                                    batch_size=datasetSpecs.get("batch_size"),
+                                    num_epochs=datasetSpecs.get("num_epochs"),
+                                    shuffle_buffer_size=datasetSpecs.get("shuffle_buffer_size"),
+                                    is_training=train_mode)
+                return dataset
+    return input_fn

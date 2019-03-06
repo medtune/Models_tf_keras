@@ -23,42 +23,6 @@ native_optimizers = {
     "rmsprop": tf.train.RMSPropOptimizer
 }
 
-# Dictionnary that contain the default
-# height and width for each model name
-height_width = {
-"densenet121": (224,224),
-"densenet169": (224,224),
-"densenet201": (224,224),
-"densenet264": (224,224),
-"inceptionv3": (299,299),
-"inception_resnet_v2": (299,299),
-"mobilenet": (224,224),
-"mobilenetv2": (224,224),
-"nasnet_mobile": (224,224),
-"nasnet_large": (331,331),
-"resnet": (224,224),
-"vgg16": (224,224),
-"vgg19": (224,224),
-"xception": (299,299)
-}
-
-channels = {
-    "gray": (1,),
-    "rgb": (3,),
-    "rgba": (4,)
-}
-
-def get_default_shape(name, image_type):
-    """
-    Based on the model's name and the image type
-    (grayscale, RGB, RGBA), the function returns
-    a tuple of 3 dims representing the input shape
-    """
-    
-    assert name in height_width.keys()
-    shape = height_width.get(name) + channels.get(image_type)
-    return shape
-
 def get_loss_function(classification_type):
         """
         Depending on the label type (sparse or one_hot) and the classification type,
@@ -79,7 +43,7 @@ def get_aggregation_function(classification_type):
         return tf.nn.sigmoid
     return tf.nn.softmax
 
-class Classifier(object):
+class Classifier():
     """
     Multiclass classification makes the assumption that each sample is assigned to one and only one label
     Multilabel classification assigns to each sample a set of target labels
@@ -151,7 +115,7 @@ class AssembleModel():
                 * batch_size : integer representing number of examples per batch 
         """
         # Get the CNN model base on the given name
-        self.modelName = params["model_name"]
+        self.modelName = params["name"]
         self.cnn_model = famous_cnn.architectures.get(self.modelName)
         # Define the image type : 'Grayscale' or 'RGB'
         self.input_type = params["image_type"]
@@ -170,8 +134,8 @@ class AssembleModel():
         # before decay:
         self.learningRate = params["learning_rate"]
         self.optimizerNoun = params["optimizer_noun"]
-        _num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
-        self.decay_steps = int(self.learningRate["before_decay"] * _num_batches_per_epoch)
+        self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
+        self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         del params
     
     def get_hyperparams(self):
