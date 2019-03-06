@@ -36,7 +36,7 @@ def main():
                                         eval_distribute=strategy,
                                         session_config=config)
 
-    estimator = tf.estimator.Estimator(model.model_fn, run_config)
+    estimator = tf.estimator.Estimator(model.model_fn, config=run_config)
     
     #Define trainspec estimator, including max number of step for training
     max_step = model.num_batches_per_epoch * datasetSpec["num_epochs"]
