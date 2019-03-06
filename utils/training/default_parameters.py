@@ -18,9 +18,9 @@ height_width = {
 }
 
 channels = {
-    "gray": (1,),
-    "rgb": (3,),
-    "rgba": (4,)
+    "gray": 1,
+    "rgb": 3,
+    "rgba": 4
 }
 
 def get_default_shape(name):
