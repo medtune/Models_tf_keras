@@ -9,7 +9,7 @@ This file contains building code for MobileNetV2, based on
 """
 
 import tensorflow.keras as keras
-from famous_cnn import correct_pad
+from . import famous_cnn.correct_pad as correct_pad
 
 
 def _make_divisible(v, divisor, min_value=None):

@@ -14,7 +14,9 @@ def decode(yamlFilename):
     model_spec = config.get("model")
     model_spec = getModelFnSpec(dataset_spec, train_spec, model_spec)
     dataset_spec = getInputFnSpec(dataset_spec, train_spec, model_spec["name"])
-    return dataset_spec, train_spec, model_spec
+    device_spec = train_spec
+    print(device_spec)
+    return dataset_spec, model_spec, device_spec
 
 def getModelFnSpec(dataSpec, trainSpec, modelSpec):
     """
@@ -41,7 +43,7 @@ def getModelFnSpec(dataSpec, trainSpec, modelSpec):
             if tag in dataSpecKeys:
                 modelSpec[tag] = dataSpec[tag]
             elif tag in trainSpecKeys:
-                modelSpec[tag] = trainSpec[tag]
+                modelSpec[tag] = trainSpec.pop(tag)
             else:
                 raise KeyError('The requested key %s is not found in both training\
                                 and dataset specifications. PLease refer to the yaml file\
@@ -69,7 +71,7 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
     for tag in tagsList:
         if tag not in dataSpec.keys():
             if tag in trainSpecKeys:
-                dataSpec[tag] = trainSpec[tag]
+                dataSpec[tag] = trainSpec.pop(tag)
             else:
                 raise KeyError('The requested key %s is not found in both training\
                                 and dataset specifications. PLease refer to the yaml file\
