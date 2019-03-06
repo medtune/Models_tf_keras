@@ -171,7 +171,7 @@ class AssembleModel():
             model_fn function
         """
         # Calculate CNN features (last layer output) :
-        cnn_features = self.cnn_model(features["image"])
+        cnn_features = self.cnn_model(features)
         # Calculate the classification results : 
         logits = self.classifier.construct(cnn_features)
 
