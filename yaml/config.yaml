@@ -6,7 +6,7 @@ dataset:
   image_type: "gray"
 model:
   name: "mobilenetv2"
-  classification_layers: null
+  classification_layers: []
   classification_type: "binary"
   optimizer_noun: "adam"
   activation_func: "relu"

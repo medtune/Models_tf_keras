@@ -12,7 +12,7 @@ def main():
     # Yaml filename
     yamlFilename = os.path.join(cwd, "yaml","config.yaml")
     # Use the config file and extract dataset, model and training specs
-    datasetSpec, deviceSpec, modelSpec = read_config.decode(yamlFilename)
+    datasetSpec, modelSpec, deviceSpec  = read_config.decode(yamlFilename)
     # Construct the training folder 
     train_dir = os.path.join(cwd, "train_"+ modelSpec.get("name"))
     # Create log_dir : argscope_config

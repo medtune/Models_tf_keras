@@ -43,7 +43,7 @@ def getModelFnSpec(dataSpec, trainSpec, modelSpec):
             if tag in dataSpecKeys:
                 modelSpec[tag] = dataSpec[tag]
             elif tag in trainSpecKeys:
-                modelSpec[tag] = trainSpec.pop(tag)
+                modelSpec[tag] = trainSpec[tag]
             else:
                 raise KeyError('The requested key %s is not found in both training\
                                 and dataset specifications. PLease refer to the yaml file\
@@ -67,14 +67,13 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
                 "num_epochs", "num_samples", "shuffle_buffer_size"]
     
     trainSpecKeys = trainSpec.keys()
-
     for tag in tagsList:
         if tag not in dataSpec.keys():
             if tag in trainSpecKeys:
                 dataSpec[tag] = trainSpec.pop(tag)
             else:
                 raise KeyError('The requested key %s is not found in both training\
-                                and dataset specifications. PLease refer to the yaml file\
+                                and dataset specifications. Please refer to the yaml file\
                                 configuration'%(tag))
     dataSpec["image_size"] = default_parameters.get_default_shape(modelName)
     dataSpec["image_channels"] = default_parameters.get_default_channels(dataSpec["image_type"])
@@ -107,13 +106,13 @@ def setDeviceConfig(distributionStrategy, xlaStrategy):
     optimization
     """
     import tensorflow as tf
-    strategy, jitLevel = None, None
+    strategy, jitLevel = None, 0
     if distributionStrategy:
         strategy = tf.contrib.distribute.MirroredStrategy()
     if xlaStrategy:
-        jit_level = tf.OptimizerOptions.ON_1
+        jitLevel = tf.OptimizerOptions.ON_1
     # Define tf.ConfigProto() as config to pass to estimator config:
     config = tf.ConfigProto()
     #Define optimizers options based on jit_level:
-    config.graph_options.optimizer_options.global_jit_level = jit_level
+    config.graph_options.optimizer_options.global_jit_level = jitLevel
     return strategy, config
