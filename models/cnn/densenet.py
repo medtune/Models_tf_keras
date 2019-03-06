@@ -149,7 +149,7 @@ def densenet(blocks,
     if pooling == 'avg':
         x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
     elif pooling == 'max':
-        x = keras.layers.GlobalMaxPooling2D(name=naming+'max_pool')(x)
+        x = keras.layers.GlobalMaxPool2D(name=naming+'max_pool')(x)
     return x
 
 def densenet121(inputs,

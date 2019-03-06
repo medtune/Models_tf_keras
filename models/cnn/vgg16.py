@@ -99,7 +99,7 @@ def vgg16(inputs,
                       activation=activation,
                       padding='same',
                       name='block5_conv3')(x)
-    x = keras.layers.MaxPooling2D((2, 2), 
+    x = keras.layers.MaxPool2D((2, 2), 
                                 strides=(2, 2),
                                 name=naming+'block5_pool')(x)
 
