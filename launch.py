@@ -42,12 +42,10 @@ def main():
     max_step = model.num_batches_per_epoch * datasetSpec["num_epochs"]
     train_spec = tf.estimator.TrainSpec(input_fn = dataset_images.\
                                         get_input_fn(tf.estimator.ModeKeys.TRAIN, datasetSpec), 
-                                        max_steps = max_step,
-                                        hooks=[])
+                                        max_steps = max_step)
     #Define evalspec estimator
     eval_spec = tf.estimator.EvalSpec(input_fn=dataset_images.\
-                                    get_input_fn(tf.estimator.ModeKeys.EVAL, datasetSpec),
-                                    hooks=[])       
+                                    get_input_fn(tf.estimator.ModeKeys.EVAL, datasetSpec))       
     #Run the training and evaluation (1 eval/epoch)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 

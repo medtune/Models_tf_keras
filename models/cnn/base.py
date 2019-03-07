@@ -78,14 +78,15 @@ class Classifier():
         """
         #Create intermediate variable representing the intermediate layers
         #of the neural networks:
-        inter = Flatten()(features)
-        if self.classification_layers:
-            for size in self.classification_layers:
-                inter = Dense(size, activation=self.activation)(inter)
-        if self.classification_type=="multiclass":
-            logits = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
-        else:
-            logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
+        with tf.name_scope("Logits"):
+            inter = Flatten()(features)
+            if self.classification_layers:
+                for size in self.classification_layers:
+                    inter = Dense(size, activation=self.activation)(inter)
+            if self.classification_type=="multiclass":
+                logits = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
+            else:
+                logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
         return logits
 
 #TODO: Instead of Downloading keras weights (.h5 format)
