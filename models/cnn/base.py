@@ -5,7 +5,6 @@ import utils.training.monitor as monitor
 
 from tensorflow.keras.layers import Dense, Flatten
 from . import famous_cnn
-
 """
 Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier
@@ -40,59 +39,6 @@ def get_aggregation_function(classification_type):
         return tf.nn.sigmoid
     return tf.nn.softmax
 
-class Classifier():
-    """
-    Multiclass classification makes the assumption that each sample is assigned to one and only one label
-    Multilabel classification assigns to each sample a set of target labels
-    """
-    def __init__(self, num_classes,
-                classification_type,
-                classification_layers, 
-                activation_func):
-        """
-        Args:
-            features: A Layer instance representing the last layer of a CNN model
-            classification_type: "multiclass" or "multilabel". String
-            classification_layers: A list. Each element is an integer representing
-                                    the number of neurons in each layer.
-            num_classes: A integer. Number of classes (categories) 
-                            that you want to train your model into.
-        """
-        #Classification_type refers to the definition above
-        self.classification_type = classification_type
-        assert type(classification_layers) is list
-        self.classification_layers = classification_layers
-        #It also accepts features coming from the last layer of the CNN
-        self.num_classes = num_classes
-        # Check if module has this func
-        if hasattr(tf.nn, activation_func):
-            #define the activation function 
-            self.activation = getattr(tf.nn, activation_func) 
-    
-    def construct(self, features):
-        """
-        We construct a Neural Network with the number of layers equivalent to
-        len classification_layers list.
-        Args:
-            features: features layer 
-        """
-        #Create intermediate variable representing the intermediate layers
-        #of the neural networks:
-        with tf.name_scope("Logits"):
-            inter = Flatten()(features)
-            if self.classification_layers:
-                for size in self.classification_layers:
-                    inter = Dense(size, activation=self.activation)(inter)
-            if self.classification_type=="multiclass":
-                logits = Dense(self.num_classes, activation=tf.nn.softmax)(inter)
-            else:
-                logits = Dense(self.num_classes, activation=tf.nn.sigmoid)(inter)
-        return logits
-
-#TODO: Instead of Downloading keras weights (.h5 format)
-# we download checkpoint from slim repository:
-# ex:inceptionv1 (http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz)
-
 class AssembleComputerVisionModel():
 
     def __init__(self, params):
@@ -123,11 +69,6 @@ class AssembleComputerVisionModel():
         self.classificationType = params["classification_type"]
         self.classificationLayers = params["classification_layers"]
         self.activationFunc = params["activation_func"]
-        # Define the classifier as an instance of Classifier:
-        self.classifier = Classifier(self.numClasses,
-                                    self.classificationType,
-                                    self.classificationLayers,
-                                    self.activationFunc)
         # Dict learning rate containing: initial lr, decay factor, epochs
         # before decay:
         self.learningRate = params["learning_rate"]
@@ -174,7 +115,7 @@ class AssembleComputerVisionModel():
         # Calculate CNN features (last layer output) :
         cnn_features = self.cnn_model(features)
         # Calculate the classification results : 
-        logits = self.classifier.construct(cnn_features)
+        logits = self.construct(cnn_features)
         if mode == tf.estimator.ModeKeys.PREDICT:
             _ , top_5 =  tf.nn.top_k(logits, k=5)
             predictions = {
@@ -231,3 +172,47 @@ class AssembleComputerVisionModel():
                                                   loss=total_loss, 
                                                   train_op=train_op,
                                                   training_hooks=[trainHook])
+    def initModel(self, jobPath):
+        """
+        Given a folder path, we check the existence of 
+        the checkpoint from a previous training session.
+        If it doesn't exists, we download the "imagenet"
+        checkpoint model using modelNaming.
+        """
+        if jobPath is None:
+            raise ValueError("Path must not be None. Please provide\
+                            the folder path  from which you wish to restore/finetune\
+                            your model.\
+                            Example:\
+                            |_ jobPath\
+                                |_imagenet_weights\
+                                |_train\
+                                |_eval")
+        modelPath = tf.train.latest_checkpoint(os.path.join(jobPath,"train"))
+        if modelPath:
+            variableToRestore = tf.get_collection("GLOBAL_VARIABLES")
+        return
+
+
+    def construct(self, features):
+        """
+        We construct a Neural Network with the number of layers equivalent to
+        len classification_layers list.
+        Args:
+            features: features layer 
+        """
+        # Create intermediate variable representing the intermediate layers
+        # of the neural networks:
+        if hasattr(tf.nn, self):
+            #define the activation function 
+            activation = getattr(tf.nn, self.activationFunc) 
+        with tf.name_scope("Logits"):
+            inter = Flatten()(features)
+            if self.classificationLayers:
+                for size in self.classificationLayers:
+                    inter = Dense(size, activation=activation)(inter)
+            if self.classificationType=="multiclass":
+                logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
+            else:
+                logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
+        return logits

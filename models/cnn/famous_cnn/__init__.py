@@ -1,6 +1,3 @@
-
-
-import tensorflow.keras as keras
 from . import densenet
 from . import mobilenet
 from . import mobilenetv2
@@ -25,8 +22,10 @@ architectures  = {
     "vgg16": vgg16.vgg16,
     "vgg19": vgg19.vgg19
 }
+
 # URL of checkpoints of famous CNN models trained on imagenet
 # (.ref https://github.com/tensorflow/models/tree/master/research/slim)
+
 checkpoints = {
     "densenet121": "https://drive.google.com/open?id=0B_fUSpodN0t0eW1sVk1aeWREaDA",
     "densenet169": "https://drive.google.com/open?id=0B_fUSpodN0t0TDB5Ti1PeTZMM2c",
