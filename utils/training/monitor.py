@@ -9,46 +9,16 @@ It also provides utily functions to call tf.summary.xxx depending on the
 model
 """
 
-_graph = tf.get_default_graph()
-_summaries = _graph.get_collection("variables")
-
-def get_summary(model):
+def getSummariesComputerVision():
     """
-    Given a Model instance (a combination of a CNN model & a classifier),
+    Given a Graph instance (the model graph),
     we compute and return a tf.summary instance
     """
-    tf.summary.image("image", model.layers[0].output)
-    for i, layer in enumerate(model.layers[1:]):
-        tf.summary.histogram(layer.name, layer.output)
-    merge_summaries = tf.summary.merge_all() 
+    graph = tf.get_default_graph()
+    trainableVariables = graph.get_collection("trainable")
+    for variable in trainableVariables:
+        tf.summary.histogram(variable.name, variable)
+    merge_summaries = tf.summary.merge_all()
     return merge_summaries
 
-class TrainStats(tf.train.SessionRunHook):
-    """Logs training summaries into Tensorboard """
 
-    def __init__(self, summary):
-        """
-
-        """
-        self.graph = tf.get_default_graph()
-        self.summaries = self.graph.get_collection("summaries")
-        self.summary = summary
-    
-    def begin(self):
-        """
-        :param session:
-            Tensorflow session
-        :param coord:
-            unused
-        """
-        self.graph.add_to_collection("summaries", self.summary)
-
-class TrainLogs(tf.train.LoggingTensorHook):
-    """
-    Create and stream logs to IO output
-    """
-    def __init__(self):
-        pass
-
-    def begin(self):
-        pass

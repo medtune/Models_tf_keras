@@ -112,15 +112,15 @@ def densenet(blocks,
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     if blocks == [6, 12, 24, 16]:
-        naming = 'densenet121/'
+        naming = 'Densenet121_'
     elif blocks == [6, 12, 32, 32]:
-        naming = 'densenet169/'
+        naming = 'Densenet169_'
     elif blocks == [6, 12, 48, 32]:
-        naming = 'densenet201/'
+        naming = 'Densenet201_'
     elif blocks == [6, 12, 64, 48]:
-        naming= 'densenet264/'
+        naming= 'Densenet264_'
     else:
-        naming = 'densenet/'
+        naming = 'Densenet_'
     
     x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)
     x = keras.layers.Conv2D(64, 7, 
@@ -130,8 +130,8 @@ def densenet(blocks,
     x = keras.layers.BatchNormalization(bn_axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
-                                        name=naming+"conv1/bn")(x)
-    x = keras.layers.Activation(activation, name=naming+"conv1/"+activation)(x)
+                                        name=naming+"conv1_bn")(x)
+    x = keras.layers.Activation(activation, name=naming+"conv1"+activation)(x)
     x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
     x = keras.layers.MaxPooling(3, strides=2, name=naming+'pool1')(x)
     x = _dense_block(x, blocks[0], naming+'conv2')
@@ -144,7 +144,7 @@ def densenet(blocks,
     x = keras.layers.BatchNormalization(bn_axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
-                                        name=naming+'bn')(x)
+                                        name=naming+'_bn')(x)
     x = keras.layers.Activation(activation, naming+activation)(x)
     if pooling == 'avg':
         x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)

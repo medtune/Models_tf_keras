@@ -24,7 +24,7 @@ def vgg19(inputs,
         - Tensor representing features 
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    naming = 'vgg19'
+    naming = 'Vgg19_'
 
     #Block 1:
     x = keras.layers.Conv2D(64, (3,3),

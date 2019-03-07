@@ -1,18 +1,15 @@
 import tensorflow as tf
 import tensorflow.keras as keras
+import os
+import utils.training.monitor as monitor
+
 from tensorflow.keras.layers import Dense, Flatten
 from . import famous_cnn
-import os
 
 """
-Models have the same arguments: 
-#include_top, weights, input_tensor,
-#input_shape, pooling, classes
-#Mobilenet models have two additionnal arguments:
+Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier
-
 """
-
 native_optimizers = {
     "adadelta": tf.train.AdadeltaOptimizer,
     "adagrad": tf.train.AdagradOptimizer,
@@ -133,7 +130,10 @@ class AssembleModel():
         # Dict learning rate containing: initial lr, decay factor, epochs
         # before decay:
         self.learningRate = params["learning_rate"]
+        # String representing the noun of the optimizer we want to use 
+        # (ref. list of nouns)
         self.optimizerNoun = params["optimizer_noun"]
+        # Int. we use it to calculate the decay step 
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         del params
@@ -203,9 +203,12 @@ class AssembleModel():
             #'Acc_Class': tf.metrics.mean_per_class_accuracy(labels, predicted_classes,len(labels_to_names), name="per_class_acc")
             }
             if mode == tf.estimator.ModeKeys.EVAL:
+                evaluationHook = tf.train.SummarySaverHook(summary_op = \
+                                    tf.summary.image("validation_images", features))
                 #TODO: Add evaluation hooks
                 return tf.estimator.EstimatorSpec(mode, loss=total_loss,
-                                                eval_metric_ops=metrics)
+                                                eval_metric_ops=metrics,
+                                                evaluation_hooks=[evaluationHook])
 
             else :
                 for name, value in metrics.items():
@@ -223,5 +226,8 @@ class AssembleModel():
                 with tf.name_scope("optimizer"):
                     optimizer = native_optimizers.get(self.optimizerNoun)(lr)
                     train_op = optimizer.minimize(total_loss)
-                
-                return tf.estimator.EstimatorSpec(mode, loss=total_loss, train_op=train_op)
+                trainHook = tf.train.SummarySaverHook(summary_op=monitor.getSummariesComputerVision())
+                return tf.estimator.EstimatorSpec(mode, 
+                                                  loss=total_loss, 
+                                                  train_op=train_op,
+                                                  training_hooks=[trainHook])
