@@ -174,7 +174,6 @@ class AssembleModel():
         cnn_features = self.cnn_model(features)
         # Calculate the classification results : 
         logits = self.classifier.construct(cnn_features)
-
         if mode == tf.estimator.ModeKeys.PREDICT:
             _ , top_5 =  tf.nn.top_k(logits, k=5)
             predictions = {
@@ -203,8 +202,8 @@ class AssembleModel():
             #'Acc_Class': tf.metrics.mean_per_class_accuracy(labels, predicted_classes,len(labels_to_names), name="per_class_acc")
             }
             if mode == tf.estimator.ModeKeys.EVAL:
-                evaluationHook = tf.train.SummarySaverHook(summary_op = \
-                                    tf.summary.image("validation_images", features))
+                evaluationHook = tf.train.SummarySaverHook(save_steps=100,
+                                summary_op = tf.summary.image("validation_images", features))
                 #TODO: Add evaluation hooks
                 return tf.estimator.EstimatorSpec(mode, loss=total_loss,
                                                 eval_metric_ops=metrics,
@@ -226,7 +225,8 @@ class AssembleModel():
                 with tf.name_scope("optimizer"):
                     optimizer = native_optimizers.get(self.optimizerNoun)(lr)
                     train_op = optimizer.minimize(total_loss)
-                trainHook = tf.train.SummarySaverHook(summary_op=monitor.getSummariesComputerVision())
+                trainHook = tf.train.SummarySaverHook(save_steps=self.num_batches_per_epoch,
+                                        summary_op=monitor.getSummariesComputerVision())
                 return tf.estimator.EstimatorSpec(mode, 
                                                   loss=total_loss, 
                                                   train_op=train_op,
