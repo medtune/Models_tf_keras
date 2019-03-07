@@ -26,7 +26,7 @@ def main():
     # distribute::distribution Strategy ; xla:: xla computation optimization
     strategy, config = read_config.setDeviceConfig(deviceSpec["distribute"],
                                                     deviceSpec["xla"]  )
-    model = base.AssembleModel(modelSpec)
+    model = base.AssembleComputerVisionModel(modelSpec)
     
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps = model.num_batches_per_epoch,

@@ -92,7 +92,7 @@ class Classifier():
 # we download checkpoint from slim repository:
 # ex:inceptionv1 (http://download.tensorflow.org/models/inception_v1_2016_08_28.tar.gz)
 
-class AssembleModel():
+class AssembleComputerVisionModel():
 
     def __init__(self, params):
         """
@@ -193,7 +193,6 @@ class AssembleModel():
                                                    (labels, logits)
             # Add the regularization loss : 
             total_loss = tf.losses.get_total_loss()
-
             # Metrics 
             metrics = {
             'Accuracy': tf.metrics.accuracy(labels, logits, name="acc_op"),
