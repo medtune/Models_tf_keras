@@ -1,9 +1,9 @@
 import tensorflow as tf
 import tensorflow.keras as keras
 import os
-import utils.training.monitor as monitor
-
 from tensorflow.keras.layers import Dense, Flatten
+
+import utils.training.monitor as monitor
 from . import famous_cnn
 
 """
@@ -61,6 +61,7 @@ class AssembleComputerVisionModel():
         """
         # Get the CNN model base on the given name
         self.modelName = params["name"]
+        self.checkpointName = self.modelName
         self.cnn_model = famous_cnn.architectures.get(self.modelName)
         # Define the image type : 'Grayscale' or 'RGB'
         self.input_type = params["image_type"]
@@ -194,9 +195,19 @@ class AssembleComputerVisionModel():
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
         else:
-            modelPath = tf.train.latest_checkpoint(os.path.join(jobPath,"imagenet_weights"))
+            downloadDir = os.path.join(jobPath,"imagenet_weights")
+            modelPath = tf.train.latest_checkpoint(downloadDir)
             if not modelPath:
-                monitor.download_imagenet_checkpoints(self.modelName)
+                # Extract url from checkpoints dict using the attribute checkpointName 
+                url = famous_cnn.checkpoints.get(self.checkpointName)
+                monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
+            # We create train and eval dir inside the job folder : 
+            trainDir = os.path.join(jobPath,"train")
+            if not os.path.exists(trainDir):
+                os.makedirs(trainDir)
+            evalDir = os.path.join(jobPath, "eval")
+            if not os.path.exists(evalDir):
+                os.makedirs(evalDir)
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[self.modelName])
         return warmStartSetting
 

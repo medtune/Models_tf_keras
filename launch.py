@@ -14,10 +14,10 @@ def main():
     # Use the config file and extract dataset, model and training specs
     datasetSpec, modelSpec, deviceSpec  = read_config.decode(yamlFilename)
     # Construct the training folder 
-    train_dir = os.path.join(cwd, "train_"+ modelSpec.get("name"))
+    jobDir = os.path.join(cwd, "job_"+ modelSpec.get("name"))
     # Create log_dir : argscope_config
-    if not os.path.exists(train_dir):
-        os.mkdir(train_dir)
+    if not os.path.exists(jobDir):
+        os.mkdir(jobDir)
     #===================================================================== Training ===========================================================================#
     #Adding the graph:
     #Set the verbosity to INFO level
@@ -31,11 +31,11 @@ def main():
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps = model.num_batches_per_epoch,
                                         keep_checkpoint_max=datasetSpec["num_epochs"],
-                                        model_dir=train_dir,
                                         train_distribute=strategy,
                                         eval_distribute=strategy,
                                         session_config=config)
-
+    # Define warm start setting using initModel method:
+    warmStartSetting = model
     estimator = tf.estimator.Estimator(model.model_fn, config=run_config)
     
     #Define trainspec estimator, including max number of step for training
