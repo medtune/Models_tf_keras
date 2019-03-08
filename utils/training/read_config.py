@@ -1,6 +1,5 @@
 
 import yaml
-from . import default_parameters
 
 # Dictionnary that contain the default
 # height and width for each model name
