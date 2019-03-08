@@ -6,11 +6,9 @@ VGG16 model
 """
 import tensorflow.keras as keras
 
-def vgg16(inputs,
-        pooling=None,
-        activation="relu",
-        momentum=0.99,
-        epsilon=0.001):
+def vgg_16(inputs,
+           pooling='max',
+           activation="relu"):
     """
     Arguments:
         - inputs: image input tensor 

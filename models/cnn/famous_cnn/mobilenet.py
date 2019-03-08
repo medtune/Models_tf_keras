@@ -88,7 +88,7 @@ def _depthwise_conv(inputs,
     """
     Args:
         filters: pointwise convolutional filters 
-        alpha: alpha: controls the width of the network.
+        alpha: controls the width of the network.
             - If `alpha` < 1.0, proportionally decreases the number
                 of filters in each layer.
             - If `alpha` > 1.0, proportionally increases the number
@@ -130,12 +130,12 @@ def _depthwise_conv(inputs,
     x = keras.layers.RELU(6., name=name_prefix+'conv_pw_%d_relu')(x)
     return x
 
-def mobilenet(inputs,
-            alpha=1.0,
-            depthwise_multiplier=1,
-            pooling=None,
-            momentum=0.99,
-            epsilon=0.001):
+def mobilenet_v1(inputs,
+                alpha=1.0,
+                depthwise_multiplier=1,
+                pooling=None,
+                momentum=0.99,
+                epsilon=0.001):
     """
     Args:
         alpha: alpha: controls the width of the network.

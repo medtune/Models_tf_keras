@@ -12,15 +12,19 @@ from . import vgg19
 # Neural Nertworks that we can invoke in order to perform
 # image recognition 
 
+default_names = ["densenet_121", "densenet_169", "densenet_201",
+                "densenet_264", "mobilenet_v1", "mobilenet_v2", 
+                "vgg_16", "vgg_19"]
+
 architectures  = {
-    "densenet_121": densenet.densenet121,
-    "densenet_169": densenet.densenet169,
-    "densenet_201": densenet.densenet201,
-    "densenet_264": densenet.densenet264,
-    "mobilenet_v1": mobilenet.mobilenet,
-    "mobilenet_v2": mobilenetv2.mobilenetv2,
-    "vgg_16": vgg16.vgg16,
-    "vgg_19": vgg19.vgg19
+    "densenet_121": densenet.densenet_121,
+    "densenet_169": densenet.densenet_169,
+    "densenet_201": densenet.densenet_201,
+    "densenet_264": densenet.densenet_264,
+    "mobilenet_v1": mobilenet.mobilenet_v1,
+    "mobilenet_v2": mobilenetv2.mobilenet_v2,
+    "vgg_16": vgg16.vgg_16,
+    "vgg_19": vgg19.vgg_19
 }
 
 # URL of checkpoints of famous CNN models trained on imagenet

@@ -42,7 +42,7 @@ def download_imagenet_checkpoints(modelName, url, downloadDir):
         - downloadDir : Correspond to jobPath/imagenet_weights
     """
     fileExtension = "_*.tar.gz"
-    fileName = os.path.join(downloadDir,modelName,fileExtension)
+    fileName = os.path.join(downloadDir,modelName+fileExtension)
     if not os.path.exists(fileName):
         if not os.path.exists(downloadDir):
             os.makedirs(downloadDir)

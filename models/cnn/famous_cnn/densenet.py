@@ -152,7 +152,7 @@ def densenet(blocks,
         x = keras.layers.GlobalMaxPool2D(name=naming+'max_pool')(x)
     return x
 
-def densenet121(inputs,
+def densenet_121(inputs,
             pooling='avg',
             activation="relu",
             momentum=0.99,
@@ -164,7 +164,7 @@ def densenet121(inputs,
                     momentum=momentum,
                     epsilon=epsilon)
 
-def densenet169(inputs,
+def densenet_169(inputs,
             pooling='avg',
             activation="relu",
             momentum=0.99,
@@ -176,7 +176,7 @@ def densenet169(inputs,
                     momentum=momentum,
                     epsilon=epsilon)
 
-def densenet201(inputs,
+def densenet_201(inputs,
                 pooling='avg',
                 activation="relu",
                 momentum=0.99,
@@ -188,7 +188,7 @@ def densenet201(inputs,
                     momentum=momentum,
                     epsilon=epsilon)
 
-def densenet264(inputs,
+def densenet_264(inputs,
                 pooling='avg',
                 activation="relu",
                 momentum=0.99,
@@ -200,7 +200,7 @@ def densenet264(inputs,
                     momentum=momentum,
                     epsilon=epsilon)
 
-setattr(densenet121, '__doc__', densenet.__doc__)
-setattr(densenet169, '__doc__', densenet.__doc__)
-setattr(densenet201, '__doc__', densenet.__doc__)
-setattr(densenet264, '__doc__', densenet.__doc__)
+setattr(densenet_121, '__doc__', densenet.__doc__)
+setattr(densenet_169, '__doc__', densenet.__doc__)
+setattr(densenet_201, '__doc__', densenet.__doc__)
+setattr(densenet_264, '__doc__', densenet.__doc__)

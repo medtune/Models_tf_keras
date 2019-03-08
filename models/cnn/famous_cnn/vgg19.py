@@ -6,11 +6,9 @@ VGG19
 """
 import tensorflow.keras as keras
 
-def vgg19(inputs,
-        pooling=None,
-        activation="relu",
-        momentum=0.99,
-        epsilon=0.001):
+def vgg_19(inputs,
+          pooling='avg',
+          activation="relu"):
     """
     Arguments:
         - inputs: image input tensor 

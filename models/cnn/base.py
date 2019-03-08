@@ -10,7 +10,7 @@ from . import famous_cnn
 Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier
 """
-native_optimizers = {
+_native_optimizers = {
     "adadelta": tf.train.AdadeltaOptimizer,
     "adagrad": tf.train.AdagradOptimizer,
     "adam": tf.train.AdamOptimizer,
@@ -19,6 +19,9 @@ native_optimizers = {
     "momentum": tf.train.MomentumOptimizer,
     "rmsprop": tf.train.RMSPropOptimizer
 }
+
+_non_batchnorm_models = ["vgg_16", "vgg_19"]
+_batchnorm_models = ["densenet_121","densenet_169","densenet_201", "densenet_264"]
 
 def get_loss_function(classification_type):
         """
@@ -40,7 +43,90 @@ def get_aggregation_function(classification_type):
         return tf.nn.sigmoid
     return tf.nn.softmax
 
+def _get_alpha(modelName):
+    """
+    This a hyperparameter related to the mobilenetV1 and mobilenetV2
+    models. Please refer to models documentation for more details
+    """
+    alpha = 0.
+    if modelName not in ["mobilenet_v1", "mobilenet_v2"]:
+        pass
+    elif modelName == "mobilenet_v1":
+        allowedValues = [0.35, 0.50, 0.75, 1.0]
+        while alpha not in allowedValues:
+            demand = "Choose between the following values of alpha:\
+                    [0.35, 0.50, 0.75, 1.0]\n"
+            alpha = float(get_input(demand))
+    else:
+        allowedValues = [1.0, 1.4]
+        while alpha not in allowedValues:
+            demand = "Please choose between the following values of alpha:\
+                    [1.0, 1.4]\n"
+            alpha = float(get_input(demand))
+    return alpha
+
+def _get_epsilon():
+    """
+    We ask the user to input a value for epsilon.
+    Epsilon is a hyperparameter that is used in the
+    batch normalization denominator
+    """
+    epsilon = 0.
+    while epsilon > 0.001:
+            demand = "Please choose a value for epsilon that is below 0.001 (or 1e-3)"
+            epsilon = float(get_input(demand))
+    return epsilon
+
+def _get_momentum():
+    """
+    We ask the user to input a value for momentum.
+    Momentum is a hyperparameter that is used in the
+    batch normalization calculus
+    """
+    momentum = 0.
+    while momentum < 0.899 and momentum >= 1:
+            demand = "Please choose a value for momentum that is between 0.99\
+                      and 0.9999... [0.99; 1[\n"
+            momentum = float(get_input(demand))
+    return momentum
+
+def _get_pooling():
+    """
+    We ask the user to input a value for momentum.
+    Momentum is a hyperparameter that is used in the
+    batch normalization calculus'
+    """
+    pooling = ''
+    while pooling not in ['avg', 'max']:
+            demand = "Please choose a value for pooling argument that is `avg`\
+                      or `max`\n"
+            pooling = str(get_input(demand))
+    return pooling
+
+def _get_depthwise():
+    """
+    We ask the user to input a value for depthwise.
+    Depthwise is an integer hyperparameter that is used in the
+    mobilenet-like model. Please refer to famous_cnn submodule
+    or to mobilenets paper
+    # Default: 1
+    """
+    pooling = ''
+    while pooling not in ['avg', 'max']:
+            demand = "Please choose a value for pooling argument that is `avg`\
+                      or `max`\n"
+            pooling = str(get_input(demand))
+    return pooling
+
+def get_input(demand):
+    try:
+        answer = raw_input(demand)
+    except NameError:
+        answer = input(demand)
+    return answer
+
 class AssembleComputerVisionModel():
+
     def __init__(self, params):
         """
         params : from the configuration file, we take the following params as
@@ -79,20 +165,8 @@ class AssembleComputerVisionModel():
         # Int. we use it to calculate the decay step 
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
-        
+        self.hyperParameters = {}
         del params
-
-    def get_hyperparams(self):
-        """
-        Using stdio inputs, we ask the user to define
-        a value for each hyperparameter of the model, depending on the
-        CNN model that is used (epsilon, batch_norm, alpha for mobilenet &
-        mobilenetv2)
-        (Inspired from https://github.com/tensorflow/tensorflow/blob/master/configure.py)
-        # Return : 
-            A dict containing the value of each hyperparameter
-        """
-        pass
 
     def get_modelName(self):
         return self.modelName
@@ -103,6 +177,34 @@ class AssembleComputerVisionModel():
     def get_numClasses(self):
         return self.numClasses
 
+    def __call__(self):
+        """
+        Using stdio inputs, we ask the user to define
+        a value for each hyperparameter of the model, depending on the
+        CNN model that is used (epsilon, batch_norm, alpha for mobilenet_v1 &
+        mobilenet_v2)
+        (Inspired from https://github.com/tensorflow/tensorflow/blob/master/configure.py)
+        # Return : 
+            A dict containing the value of each hyperparameter
+        """
+        if self.modelName in _non_batchnorm_models:
+            self.hyperParameters["pooling"] = _get_pooling()
+            self.hyperParameters["activation"] = self.activationFunc
+        
+        elif self.modelName in _batchnorm_models:
+            self.hyperParameters["pooling"] = _get_pooling()
+            self.hyperParameters["activation"] = self.activationFunc
+            self.hyperParameters["momentum"] = _get_momentum()
+            self.hyperParameters["epsilon"] = _get_epsilon()
+        else:
+            self.hyperParameters["alpha"] = _get_alpha(self.modelName)
+            self.hyperParameters["depthwise_multiplier"] = _get_depthwise()
+            self.hyperParameters["pooling"] = _get_pooling()
+            self.hyperParameters["activation"] = self.activationFunc
+            self.hyperParameters["momentum"] = _get_momentum()
+            self.hyperParameters["epsilon"] = _get_epsilon()
+            self.checkpointName = self.modelName+str(self.hyperParameters["alpha"])
+    
     def  model_fn(self, features, labels, mode):
         """
         Model_fn function that we will pass to the 
@@ -222,7 +324,7 @@ class AssembleComputerVisionModel():
         """
         # Create intermediate variable representing the intermediate layers
         # of the neural networks:
-        if hasattr(tf.nn, self):
+        if hasattr(tf.nn, self.activationFunc):
             #define the activation function 
             activation = getattr(tf.nn, self.activationFunc) 
         with tf.name_scope("Logits"):
