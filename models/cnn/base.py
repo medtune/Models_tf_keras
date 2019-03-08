@@ -168,7 +168,7 @@ class AssembleComputerVisionModel():
                     optimizer = native_optimizers.get(self.optimizerNoun)(lr)
                     train_op = optimizer.minimize(total_loss)
                 trainHook = tf.train.SummarySaverHook(save_steps=self.num_batches_per_epoch,
-                                        summary_op=monitor.getSummariesComputerVision())
+                                        summary_op=self.getSummariesComputerVision())
                 return tf.estimator.EstimatorSpec(mode, 
                                                   loss=total_loss, 
                                                   train_op=train_op,
@@ -223,3 +223,19 @@ class AssembleComputerVisionModel():
             else:
                 logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
         return logits
+
+    def getSummariesComputerVision(self):
+        """
+        We compute and return the serialized of trainable
+        variables. In the case of computer vision, it is kernel
+        filters, neural network weights and biases, `Summary` protocol  
+        buffer resulting from merging all summaries present in the
+        graph
+        """
+        graph = tf.get_default_graph()
+        trainableVariables = graph.get_collection("TRAINABLE_VARIABLES ")
+        if trainableVariables:
+            for variable in trainableVariables:
+                tf.summary.histogram(variable.name, variable)
+        merge_summaries = tf.summary.merge_all()
+        return merge_summaries
