@@ -112,13 +112,13 @@ def densenet(blocks,
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     if blocks == [6, 12, 24, 16]:
-        naming = 'Densenet121_'
+        naming = 'Densenet_121_'
     elif blocks == [6, 12, 32, 32]:
-        naming = 'Densenet169_'
+        naming = 'Densenet_169_'
     elif blocks == [6, 12, 48, 32]:
-        naming = 'Densenet201_'
+        naming = 'Densenet_201_'
     elif blocks == [6, 12, 64, 48]:
-        naming= 'Densenet264_'
+        naming= 'Densenet_264_'
     else:
         naming = 'Densenet_'
     

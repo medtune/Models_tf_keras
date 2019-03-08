@@ -5,6 +5,7 @@ import utils.training.monitor as monitor
 
 from tensorflow.keras.layers import Dense, Flatten
 from . import famous_cnn
+
 """
 Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier
@@ -172,6 +173,7 @@ class AssembleComputerVisionModel():
                                                   loss=total_loss, 
                                                   train_op=train_op,
                                                   training_hooks=[trainHook])
+    
     def initModel(self, jobPath):
         """
         Given a folder path, we check the existence of 
@@ -190,8 +192,13 @@ class AssembleComputerVisionModel():
                                 |_eval")
         modelPath = tf.train.latest_checkpoint(os.path.join(jobPath,"train"))
         if modelPath:
-            variableToRestore = tf.get_collection("GLOBAL_VARIABLES")
-        return
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
+        else:
+            modelPath = tf.train.latest_checkpoint(os.path.join(jobPath,"imagenet_weights"))
+            if not modelPath:
+                monitor.download_imagenet_checkpoints(self.modelName)
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[self.modelName])
+        return warmStartSetting
 
 
     def construct(self, features):

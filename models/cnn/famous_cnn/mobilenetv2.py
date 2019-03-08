@@ -124,7 +124,7 @@ def mobilenetv2(inputs,
         output features from MobilenetV2 
     """
     
-    naming = 'Mobilenetv2_'
+    naming = 'Mobilenet_v2_'
     axis  = keras.backend.image_data_format() #Channels axis
     if alpha not in [0.35, 0.50, 0.75, 1.0, 1.3, 1.4]:
         raise ValueError('alpha can be one of `0.35`, `0.50`, `0.75`, '
