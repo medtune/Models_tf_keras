@@ -2,6 +2,49 @@
 import yaml
 from . import default_parameters
 
+# Dictionnary that contain the default
+# height and width for each model name
+height_width = {
+"densenet_121": (224,224),
+"densenet_169": (224,224),
+"densenet_201": (224,224),
+"densenet_264": (224,224),
+"inception_v3": (299,299),
+"inception_resnet_v2": (299,299),
+"mobilenet_v1": (224,224),
+"mobilenet_v2": (224,224),
+"nasnet_mobile": (224,224),
+"nasnet_large": (331,331),
+"resnet": (224,224),
+"vgg_16": (224,224),
+"vgg_19": (224,224),
+}
+
+channels = {
+    "gray": 1,
+    "rgb": 3,
+    "rgba": 4
+}
+
+def get_default_shape(name):
+    """
+    Based on the model's name and the image type
+    (grayscale, RGB, RGBA), the function returns
+    a tuple of 3 dims representing the input shape
+    """
+    
+    assert name in height_width.keys()
+    return height_width.get(name)
+
+def get_default_channels(imageType):
+    """
+    Based on the imageType (grayscale, RGB, RGBA), 
+    the function returns a tuple of 3 dims 
+    representing the input shape
+    """
+    assert imageType in channels.keys()
+    return channels.get(imageType)
+
 def decode(yamlFilename):
     """
     Returns dataset configurations, model configurations,
@@ -15,9 +58,7 @@ def decode(yamlFilename):
     model_spec = getModelFnSpec(dataset_spec, train_spec, model_spec)
     dataset_spec = getInputFnSpec(dataset_spec, train_spec, model_spec["name"])
     device_spec = train_spec
-    print(dataset_spec)
-    print(model_spec)
-    print(device_spec)
+
     return dataset_spec, model_spec, device_spec
 
 def getModelFnSpec(dataSpec, trainSpec, modelSpec):
@@ -77,8 +118,8 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
                 raise KeyError('The requested key %s is not found in both training\
                                 and dataset specifications. Please refer to the yaml file\
                                 configuration'%(tag))
-    dataSpec["image_size"] = default_parameters.get_default_shape(modelName)
-    dataSpec["image_channels"] = default_parameters.get_default_channels(dataSpec["image_type"])
+    dataSpec["image_size"] = get_default_shape(modelName)
+    dataSpec["image_channels"] = get_default_channels(dataSpec["image_type"])
     return dataSpec
 
 def NamesToLabels(labelFile):

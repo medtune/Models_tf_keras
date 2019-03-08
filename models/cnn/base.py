@@ -41,7 +41,6 @@ def get_aggregation_function(classification_type):
     return tf.nn.softmax
 
 class AssembleComputerVisionModel():
-
     def __init__(self, params):
         """
         params : from the configuration file, we take the following params as
@@ -80,19 +79,21 @@ class AssembleComputerVisionModel():
         # Int. we use it to calculate the decay step 
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
+        
         del params
-    
+
     def get_hyperparams(self):
         """
         Using stdio inputs, we ask the user to define
         a value for each hyperparameter of the model, depending on the
         CNN model that is used (epsilon, batch_norm, alpha for mobilenet &
         mobilenetv2)
+        (Inspired from https://github.com/tensorflow/tensorflow/blob/master/configure.py)
         # Return : 
             A dict containing the value of each hyperparameter
         """
         pass
-    
+
     def get_modelName(self):
         return self.modelName
 
@@ -117,7 +118,7 @@ class AssembleComputerVisionModel():
         # Calculate CNN features (last layer output) :
         cnn_features = self.cnn_model(features)
         # Calculate the classification results : 
-        logits = self.construct(cnn_features)
+        logits = self.classify(cnn_features)
         if mode == tf.estimator.ModeKeys.PREDICT:
             _ , top_5 =  tf.nn.top_k(logits, k=5)
             predictions = {
@@ -174,10 +175,10 @@ class AssembleComputerVisionModel():
                                                   loss=total_loss, 
                                                   train_op=train_op,
                                                   training_hooks=[trainHook])
-    
+
     def initModel(self, jobPath):
         """
-        Given a folder path, we check the existence of 
+        Given a job folder path, we check the existence of 
         the checkpoint from a previous training session.
         If it doesn't exists, we download the "imagenet"
         checkpoint model using modelNaming.
@@ -208,11 +209,11 @@ class AssembleComputerVisionModel():
             evalDir = os.path.join(jobPath, "eval")
             if not os.path.exists(evalDir):
                 os.makedirs(evalDir)
+            # We define warm_strat settings for loading variables from checkpoint
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[self.modelName])
         return warmStartSetting
 
-
-    def construct(self, features):
+    def classify(self, features):
         """
         We construct a Neural Network with the number of layers equivalent to
         len classification_layers list.

@@ -4,7 +4,6 @@ import sys
 import utils.training.read_config as read_config
 import models.cnn.base as base
 import inputs.images.dataset_images as dataset_images
-import utils.training.monitor as monitor
 
 def main():
     # Open and read the yaml file :
@@ -22,7 +21,7 @@ def main():
     #Adding the graph:
     #Set the verbosity to INFO level
     tf.logging.set_verbosity(tf.logging.DEBUG)
-    # Define strategy training variable, xla computations
+    # Define strategy training variable, xla computations : 
     # distribute::distribution Strategy ; xla:: xla computation optimization
     strategy, config = read_config.setDeviceConfig(deviceSpec["distribute"],
                                                     deviceSpec["xla"]  )
@@ -35,8 +34,10 @@ def main():
                                         eval_distribute=strategy,
                                         session_config=config)
     # Define warm start setting using initModel method:
-    warmStartSetting = model
-    estimator = tf.estimator.Estimator(model.model_fn, config=run_config)
+    warmStartSetting = model.initModel(jobDir)
+    estimator = tf.estimator.Estimator(model.model_fn,
+                                       config=run_config,
+                                       warm_start_from=warmStartSetting)
     
     #Define trainspec estimator, including max number of step for training
     max_step = model.num_batches_per_epoch * datasetSpec["num_epochs"]
