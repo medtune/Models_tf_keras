@@ -302,6 +302,7 @@ class AssembleComputerVisionModel():
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             modelPath = tf.train.latest_checkpoint(downloadDir)
+            print("Model Path 1"+str(modelPath))
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
@@ -309,7 +310,7 @@ class AssembleComputerVisionModel():
                 print("URL "+ str(url))
                 monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
                 modelPath = tf.train.latest_checkpoint(downloadDir)
-                print("Model Path "+str(modelPath))
+                print("Model Path 2"+str(modelPath))
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")
             if not os.path.exists(trainDir):
