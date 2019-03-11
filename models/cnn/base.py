@@ -295,9 +295,9 @@ class AssembleComputerVisionModel():
         evalDir = os.path.join(jobPath, "eval")
         if not os.path.exists(evalDir):
             os.makedirs(evalDir)
-        modelPath = os.path.exists(os.path.join(trainDir,'model-*.ckpt'))
+        modelPath = tf.train.latest_checkpoint(trainDir)
         if modelPath:
-            warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
         else:
             # We call 'get_hyperParameters' method in order to define the model
             # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
