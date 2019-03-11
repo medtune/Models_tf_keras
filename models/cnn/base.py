@@ -271,7 +271,7 @@ class AssembleComputerVisionModel():
                     tf.summary.scalar('learning_rate', lr)
                 #Define Optimizer with decay learning rate:
                 with tf.name_scope("optimizer"):
-                    optimizer = native_optimizers.get(self.optimizerNoun)(lr)
+                    optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
                     train_op = optimizer.minimize(total_loss)
                 trainHook = tf.train.SummarySaverHook(save_steps=self.num_batches_per_epoch,
                                         summary_op=self.getSummariesComputerVision())
@@ -308,6 +308,7 @@ class AssembleComputerVisionModel():
                 print("Checkpoint Name: "+ self.checkpointName)
                 print("URL "+ str(url))
                 monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
+                modelPath = tf.train.latest_checkpoint(downloadDir)
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")
             if not os.path.exists(trainDir):
@@ -315,7 +316,7 @@ class AssembleComputerVisionModel():
             evalDir = os.path.join(jobPath, "eval")
             if not os.path.exists(evalDir):
                 os.makedirs(evalDir)
-            # We define warm_strat settings for loading variables from checkpoint
+            # We define warm_start settings for loading variables from checkpoint
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[self.modelName])
         return warmStartSetting
 
