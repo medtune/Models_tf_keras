@@ -309,6 +309,7 @@ class AssembleComputerVisionModel():
                 print("URL "+ str(url))
                 monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
                 modelPath = tf.train.latest_checkpoint(downloadDir)
+                print("Model Path "+str(modelPath))
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")
             if not os.path.exists(trainDir):
