@@ -53,8 +53,6 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         tarfile.open(name=checkpointFile, mode="r:gz").extractall(downloadDir)
         print("Finished extraction")
         ckptFiles_list = os.listdir(downloadDir)
-        for f in ckptFiles_list:
-            f.replace(checkpointName+"_*.ckpt.*",
-                      checkpointName+".ckpt.*" )
+        print(ckptFiles_list)
     else:
         print("Imagenet weights are located in job_folder/imagenet_weights")
