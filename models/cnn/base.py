@@ -289,13 +289,15 @@ class AssembleComputerVisionModel():
                                 |_imagenet_weights\
                                 |_train\
                                 |_eval")
+        # TODO: Check how to configure training dir in Estimator
         trainDir = os.path.join(jobPath,"train")
         if not os.path.exists(trainDir):
             os.makedirs(trainDir)
+        # TODO: Check how to configure eval dir in Estimator
         evalDir = os.path.join(jobPath, "eval")
         if not os.path.exists(evalDir):
             os.makedirs(evalDir)
-        modelPath = tf.train.latest_checkpoint(trainDir)
+        modelPath = tf.train.latest_checkpoint(jobPath)
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
         else:
@@ -304,8 +306,7 @@ class AssembleComputerVisionModel():
             self.get_hyperParameters()
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             print("Imagenet weights Download direction :" + downloadDir +"\n")
-            modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt.*'))
-            print("Model Path 1 "+str(modelPath))
+            modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt*'))
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
