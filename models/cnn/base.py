@@ -291,13 +291,13 @@ class AssembleComputerVisionModel():
                                 |_train\
                                 |_eval")
         trainDir = os.path.join(jobPath,"train")
-        modelPath = tf.train.latest_checkpoint(trainDir, latest_filename='model_*.ckpt')
+        modelPath = tf.train.latest_checkpoint(trainDir)
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             print("Imagenet weights Download direction :" + downloadDir +"\n")
-            modelPath = tf.train.latest_checkpoint(downloadDir, latest_filename=self.checkpointName+'.ckpt')
+            modelPath = tf.train.latest_checkpoint(downloadDir)
             print("Model Path 1 "+str(modelPath))
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
