@@ -31,24 +31,24 @@ def _print_download_progress(count, block_size, total_size):
     sys.stdout.write(msg)
     sys.stdout.flush()
 
-def download_imagenet_checkpoints(modelName, url, downloadDir):
+def download_imagenet_checkpoints(checkpointName, url, downloadDir):
     """
     Given the name of the model, we first extract the
     Imagenet URL weights from checkpoints dicts (.ref: famous_cnn)
     
     # Arguments:
-        - modelName
+        - checkpointName
         - url : Correspond to the url to tar/zip file
         - downloadDir : Correspond to jobPath/imagenet_weights
     """
-    fileExtension = "_*.tar.gz"
-    fileName = os.path.join(downloadDir,modelName+fileExtension)
-    print(fileName)
+    fileExtension = ".tar.gz"
+    fileName = os.path.join(downloadDir,checkpointName+fileExtension)
     if not os.path.exists(fileName):
         if not os.path.exists(downloadDir):
             os.makedirs(downloadDir)
         checkpointFile, _ = urllib.request.urlretrieve(url,
                                                        reporthook=_print_download_progress )
+        checkpointFile = os.rename(checkpointFile, fileName)
         # Unpack the tar-ball
         print("Extracting Imagenet weights...")
         tarfile.open(name=checkpointFile, mode="r:gz").extractall(downloadDir)
