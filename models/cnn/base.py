@@ -71,8 +71,8 @@ def _get_epsilon():
     Epsilon is a hyperparameter that is used in the
     batch normalization denominator
     """
-    epsilon = 0.
-    while epsilon < 0.001:
+    epsilon = 0.01
+    while epsilon > 0.001:
             demand = "Please choose a value for epsilon that is below 0.001 (or 1e-3)"
             epsilon = float(get_input(demand))
     return epsilon
