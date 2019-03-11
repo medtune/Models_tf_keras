@@ -166,6 +166,7 @@ class AssembleComputerVisionModel():
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         self.hyperParameters = {}
+        self.get_hyperParameters()
         del params
 
     def get_modelName(self):
@@ -177,7 +178,7 @@ class AssembleComputerVisionModel():
     def get_numClasses(self):
         return self.numClasses
 
-    def __call__(self):
+    def get_hyperParameters(self):
         """
         Using stdio inputs, we ask the user to define
         a value for each hyperparameter of the model, depending on the
@@ -303,6 +304,8 @@ class AssembleComputerVisionModel():
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
+                print("Checkpoint Name: "+ self.checkpointName)
+                print("URL "+url)
                 monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")

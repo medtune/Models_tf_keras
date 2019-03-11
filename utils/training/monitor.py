@@ -43,6 +43,7 @@ def download_imagenet_checkpoints(modelName, url, downloadDir):
     """
     fileExtension = "_*.tar.gz"
     fileName = os.path.join(downloadDir,modelName+fileExtension)
+    print(fileName)
     if not os.path.exists(fileName):
         if not os.path.exists(downloadDir):
             os.makedirs(downloadDir)
