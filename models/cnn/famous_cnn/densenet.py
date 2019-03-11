@@ -133,7 +133,7 @@ def densenet(blocks,
                                         name=naming+"conv1_bn")(x)
     x = keras.layers.Activation(activation, name=naming+"conv1"+activation)(x)
     x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
-    x = keras.layers.MaxPooling(3, strides=2, name=naming+'pool1')(x)
+    x = keras.layers.MaxPool(3, strides=2, name=naming+'pool1')(x)
     x = _dense_block(x, blocks[0], naming+'conv2')
     x = _transition_block(x, 0.5, naming+'pool2')
     x = _dense_block(x, blocks[1], naming+'conv3')
@@ -141,7 +141,7 @@ def densenet(blocks,
     x = _dense_block(x, blocks[2], naming+'conv4')
     x = _transition_block(x, 0.5, naming+'pool4')
     x = _dense_block(x, blocks[3], naming+'conv5')
-    x = keras.layers.BatchNormalization(bn_axis=axis,
+    x = keras.layers.BatchNormalization(axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
                                         name=naming+'_bn')(x)
