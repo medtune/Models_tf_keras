@@ -42,9 +42,10 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         - downloadDir : Correspond to jobPath/imagenet_weights
     """
     fileExtension = ".tar.gz"
-    ckptExtension = ['ckpt','ckpt.meta', 'ckpt.index', 'ckpt.data-00000-of-00001']
+    ckptExtension = ['.ckpt','.ckpt.meta', '.ckpt.index', '.ckpt.data-00000-of-00001']
     
     fileName = os.path.join(downloadDir,checkpointName+fileExtension)
+    fileNameExist = ckptExtension
     if not os.path.exists(fileName):
         if not os.path.exists(downloadDir):
             os.makedirs(downloadDir)
@@ -53,9 +54,13 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         # Unpack the tar-ball
         print("Extracting Imagenet weights...")
         tarFile = tarfile.open(name=checkpointFile, mode="r:gz")
-        print(tarFile.getmembers())
+        tarFileList = tarFile.getmembers()
+        for tar in tarFileList:
+           tar.name = checkpointName + os.path.splitext(tar.name)[1]
         tarFile.extractall(downloadDir)
+        tarFile.close()
         urllib.request.urlcleanup()
+
         print("Finished extraction")
     
     else:
