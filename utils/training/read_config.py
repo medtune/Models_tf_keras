@@ -27,11 +27,9 @@ channels = {
 
 def get_default_shape(name):
     """
-    Based on the model's name and the image type
-    (grayscale, RGB, RGBA), the function returns
-    a tuple of 3 dims representing the input shape
+    Based on the model's name, the function returns
+    a tuple of 2 dims representing the input shape
     """
-    
     assert name in height_width.keys()
     return height_width.get(name)
 

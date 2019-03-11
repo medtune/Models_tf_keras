@@ -33,11 +33,11 @@ architectures  = {
 checkpoints = {
     "densenet_121": "https://drive.google.com/open?id=0B_fUSpodN0t0eW1sVk1aeWREaDA",
     "densenet_169": "https://drive.google.com/open?id=0B_fUSpodN0t0TDB5Ti1PeTZMM2c",
-    "mobilenet_1.0_224": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz",
-    "mobilenet_0.50_160": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.5_160.tgz",
-    "mobilenet_0.25_128": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.25_128.tgz",
-    "mobilenet_v2_1.0_224": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz",
-    "mobilenet_v2_1.4_224": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.4_224.tgz",
+    "mobilenet_1.0": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz",
+    "mobilenet_0.50": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.5_160.tgz",
+    "mobilenet_0.25": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.25_128.tgz",
+    "mobilenet_v2_1.0": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz",
+    "mobilenet_v2_1.4": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.4_224.tgz",
     "vgg_16": "http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz",
     "vgg_19": "http://download.tensorflow.org/models/vgg_19_2016_08_28.tar.gz"
 }

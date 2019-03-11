@@ -111,8 +111,8 @@ def _get_depthwise():
     or to mobilenets paper
     # Default: 1
     """
-    pooling = ''
-    while pooling not in ['avg', 'max']:
+    depth = ''
+    while depth not in ['avg', 'max']:
             demand = "Please choose a value for pooling argument that is `avg`\
                       or `max`\n"
             pooling = str(get_input(demand))
@@ -189,6 +189,7 @@ class AssembleComputerVisionModel():
             A dict containing the value of each hyperparameter
         """
         if self.modelName in _non_batchnorm_models:
+            print()
             self.hyperParameters["pooling"] = _get_pooling()
             self.hyperParameters["activation"] = self.activationFunc
         
@@ -199,12 +200,12 @@ class AssembleComputerVisionModel():
             self.hyperParameters["epsilon"] = _get_epsilon()
         else:
             self.hyperParameters["alpha"] = _get_alpha(self.modelName)
-            self.hyperParameters["depthwise_multiplier"] = _get_depthwise()
+            self.hyperParameters["depthwise_multiplier"] = 1.
             self.hyperParameters["pooling"] = _get_pooling()
             self.hyperParameters["activation"] = self.activationFunc
             self.hyperParameters["momentum"] = _get_momentum()
             self.hyperParameters["epsilon"] = _get_epsilon()
-            self.checkpointName = self.modelName+str(self.hyperParameters["alpha"])
+            self.checkpointName = self.modelName+'_'+str(self.hyperParameters["alpha"])
     
     def  model_fn(self, features, labels, mode):
         """
@@ -305,7 +306,7 @@ class AssembleComputerVisionModel():
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 print("Checkpoint Name: "+ self.checkpointName)
-                print("URL "+url)
+                print("URL "+ str(url))
                 monitor.download_imagenet_checkpoints(self.modelName, url, downloadDir)
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")
