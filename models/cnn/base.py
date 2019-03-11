@@ -295,7 +295,7 @@ class AssembleComputerVisionModel():
         evalDir = os.path.join(jobPath, "eval")
         if not os.path.exists(evalDir):
             os.makedirs(evalDir)
-        modelPath = os.path.exists(os.path.join(trainDir,self.checkpointName+'.ckpt.*'))
+        modelPath = os.path.exists(os.path.join(trainDir,'model-*.ckpt'))
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
         else:

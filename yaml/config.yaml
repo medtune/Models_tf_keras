@@ -3,7 +3,7 @@ dataset:
   file_pattern: "phase_name/*/*/*/*.png"
   num_samples: 36807
   num_classes: 2
-  image_type: "gray"
+  image_type: "rgb"
 model:
   name: "mobilenetv2"
   classification_layers: []

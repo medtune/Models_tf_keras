@@ -51,7 +51,7 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         checkpointFile, _ = urllib.request.urlretrieve(url, filename=fileName,
                                                        reporthook=_print_download_progress)
         # Unpack the tar-ball
-        print("Extracting Imagenet weights...\n")
+        print("\n Extracting Imagenet weights...\n")
         tarFile = tarfile.open(name=checkpointFile, mode="r:gz")
         tarFileList = tarFile.getmembers()
         for tar in tarFileList:
