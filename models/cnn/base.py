@@ -301,6 +301,7 @@ class AssembleComputerVisionModel():
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
+            print("Download direction :" + downloadDir)
             modelPath = tf.train.latest_checkpoint(downloadDir)
             print("Model Path 1"+str(modelPath))
             if not modelPath:
