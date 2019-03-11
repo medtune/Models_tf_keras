@@ -53,9 +53,7 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         # Unpack the tar-ball
         print("Extracting Imagenet weights...\n")
         tarFile = tarfile.open(name=checkpointFile, mode="r:gz")
-        # Get tar repo files as members.
-        # We ommit the first element as it is a Directory
-        tarFileList = tarFile.getmembers()[1:]
+        tarFileList = tarFile.getmembers()
         for tar in tarFileList:
             extension =  os.path.splitext(tar.name)[1]
             if "ckpt" not in extension and extension in ckptExtension:
