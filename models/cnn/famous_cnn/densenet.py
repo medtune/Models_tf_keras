@@ -39,7 +39,7 @@ def _transition_block(x, reduction, name, activation="relu",
                             use_bias=False,
                             name=name + '_conv')(x)
     # Average pooling
-    x = keras.layers.AveragePooling2D(2, stride=2, name=name+"_pool")(x)
+    x = keras.layers.AveragePooling2D(2, strides=2, name=name+"_pool")(x)
     return x
 
 def conv_block(x, growth_rate, name, activation="relu",
@@ -58,14 +58,14 @@ def conv_block(x, growth_rate, name, activation="relu",
         """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     x_c = keras.layers.BatchNormalization(axis=axis,
-                                        momentum=momentum,
-                                        epsilon=epsilon,
-                                        name=name+"_bn")(x)
+                                          momentum=momentum,
+                                          epsilon=epsilon,
+                                          name=name+"_bn")(x)
     x_c = keras.layers.Activation(activation, name=name+"_"+activation)(x_c)
     # number of filters=4*growth_rate, filter size = 1
     x_c = keras.layers.Conv2D(4*growth_rate,1,
-                            use_bias=False,
-                            name=name+"_1_conv")(x_c)
+                              use_bias=False,
+                              name=name+"_1_conv")(x_c)
     x_c = keras.layers.BatchNormalization(axis=axis,
                                           momentum=momentum,
                                           epsilon=epsilon,
@@ -73,7 +73,7 @@ def conv_block(x, growth_rate, name, activation="relu",
     x_c = keras.layers.Activation(activation, name=name+"_"+activation)(x_c)
     # number of filters=growth_rate, filter size = 3
     x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
-                            use_bias=False, name=name+"_2_conv")(x_c)
+                              use_bias=False, name=name+"_2_conv")(x_c)
     output = keras.layers.Concatenate(axis=axis, name=name+"_concat")([x, x_c])
     return output
 
