@@ -62,8 +62,12 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         tarFile.extractall(downloadDir)
         tarFile.close()
         urllib.request.urlcleanup()
-
         print("Finished extraction\n")
-    
+        # We verify the existence of 'checkpoint' file:
+        ckptInfoFile = os.path.join(downloadDir, 'checkpoint')
+        if not os.path.exists(ckptInfoFile):
+            with open(ckptInfoFile, "w") as checkpoint:
+                dictInfo = {"model_checkpoint_path": checkpointName+'.ckpt'}
+                checkpoint.write(dictInfo)
     else:
         print("Imagenet weights are located in job_folder/imagenet_weights\n")
