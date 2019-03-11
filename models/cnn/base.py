@@ -290,9 +290,10 @@ class AssembleComputerVisionModel():
                                 |_imagenet_weights\
                                 |_train\
                                 |_eval")
-        modelPath = tf.train.latest_checkpoint(os.path.join(jobPath,"train"), latest_filename='model_*.ckpt')
+        trainDir = os.path.join(jobPath,"train")
+        modelPath = tf.train.latest_checkpoint(trainDir, latest_filename='model_*.ckpt')
         if modelPath:
-            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
+            warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             print("Imagenet weights Download direction :" + downloadDir +"\n")
@@ -301,10 +302,7 @@ class AssembleComputerVisionModel():
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
-                print("Checkpoint Name: "+ self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
-                modelPath = tf.train.latest_checkpoint(downloadDir, latest_filename=self.checkpointName+'.ckpt')
-                print("Model Path 2 "+str(modelPath))
             # We create train and eval dir inside the job folder : 
             trainDir = os.path.join(jobPath,"train")
             if not os.path.exists(trainDir):
@@ -313,7 +311,7 @@ class AssembleComputerVisionModel():
             if not os.path.exists(evalDir):
                 os.makedirs(evalDir)
             # We define warm_start settings for loading variables from checkpoint
-            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[self.modelName])
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[self.modelName])
         return warmStartSetting
 
     def classify(self, features):

@@ -51,7 +51,7 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         checkpointFile, _ = urllib.request.urlretrieve(url, filename=fileName,
                                                        reporthook=_print_download_progress)
         # Unpack the tar-ball
-        print("Extracting Imagenet weights...")
+        print("Extracting Imagenet weights...\n")
         tarFile = tarfile.open(name=checkpointFile, mode="r:gz")
         # Get tar repo files as members.
         # We ommit the first element as it is a Directory
@@ -65,7 +65,7 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         tarFile.close()
         urllib.request.urlcleanup()
 
-        print("Finished extraction")
+        print("Finished extraction\n")
     
     else:
-        print("Imagenet weights are located in job_folder/imagenet_weights")
+        print("Imagenet weights are located in job_folder/imagenet_weights\n")
