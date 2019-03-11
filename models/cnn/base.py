@@ -297,7 +297,7 @@ class AssembleComputerVisionModel():
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             print("Imagenet weights Download direction :" + downloadDir +"\n")
-            modelPath = tf.train.latest_checkpoint(downloadDir)
+            modelPath = tf.train.latest_checkpoint(downloadDir, latest_filename=self.checkpointName)
             print("Model Path 1 "+str(modelPath))
             if not modelPath:
                 # Extract url from checkpoints dict using the attribute checkpointName 
