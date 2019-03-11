@@ -151,7 +151,7 @@ def mobilenet_v1(inputs,
     Returns:
         output features from Mobilenet model
     """
-    naming = 'MobilenetV1'
+    naming = 'MobilenetV1_'
     axis  = keras.backend.image_data_format()
     if depthwise_multiplier <= 0:
         raise ValueError('depth_multiplier is not greater than zero.')

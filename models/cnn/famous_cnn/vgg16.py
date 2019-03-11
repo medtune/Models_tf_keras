@@ -22,7 +22,7 @@ def vgg_16(inputs,
         - Tensor representing features 
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    naming = 'Vgg16'
+    naming = 'Vgg16_'
 
     #Block 1:
     x = keras.layers.Conv2D(64, (3,3),
