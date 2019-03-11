@@ -166,7 +166,6 @@ class AssembleComputerVisionModel():
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         self.hyperParameters = {}
-        self.get_hyperParameters()
         del params
 
     def get_modelName(self):
@@ -300,6 +299,9 @@ class AssembleComputerVisionModel():
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
         else:
+            # We call 'get_hyperParameters' method in order to define the model
+            # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
+            self.get_hyperParameters()
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             print("Imagenet weights Download direction :" + downloadDir +"\n")
             modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt.*'))
