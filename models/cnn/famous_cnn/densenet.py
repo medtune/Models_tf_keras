@@ -145,7 +145,7 @@ def densenet(blocks,
                                         momentum=momentum,
                                         epsilon=epsilon,
                                         name=naming+'_bn')(x)
-    x = keras.layers.Activation(activation, naming+activation)(x)
+    x = keras.layers.Activation(activation, name=naming+activation)(x)
     if pooling == 'avg':
         x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
     elif pooling == 'max':
