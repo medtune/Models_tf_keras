@@ -46,11 +46,12 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
     if not os.path.exists(fileName):
         if not os.path.exists(downloadDir):
             os.makedirs(downloadDir)
-        checkpointFile, _ = urllib.request.urlretrieve(url, filename=fileName,
+        checkpointFile, _ = urllib.request.urlretrieve(url, filename=downloadDir,
                                                        reporthook=_print_download_progress)
+        os.rename(checkpointFile, fileName)
         # Unpack the tar-ball
         print("Extracting Imagenet weights...")
-        tarfile.open(name=checkpointFile, mode="r:gz").extractall(downloadDir)
+        tarfile.open(name=fileName, mode="r:gz").extractall(downloadDir)
         urllib.request.urlcleanup()
         print("Finished extraction")
     else:
