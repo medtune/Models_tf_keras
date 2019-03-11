@@ -72,7 +72,7 @@ def _get_epsilon():
     batch normalization denominator
     """
     epsilon = 0.
-    while epsilon > 0.001:
+    while epsilon < 0.001:
             demand = "Please choose a value for epsilon that is below 0.001 (or 1e-3)"
             epsilon = float(get_input(demand))
     return epsilon
@@ -84,7 +84,7 @@ def _get_momentum():
     batch normalization calculus
     """
     momentum = 0.
-    while momentum < 0.899 and momentum >= 1:
+    while momentum < 0.899 or momentum >= 1:
             demand = "Please choose a value for momentum that is between 0.99\
                       and 0.9999... [0.99; 1[\n"
             momentum = float(get_input(demand))
