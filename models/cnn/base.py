@@ -188,24 +188,18 @@ class AssembleComputerVisionModel():
         # Return : 
             A dict containing the value of each hyperparameter
         """
-        if self.modelName in _non_batchnorm_models:
-            print()
-            self.hyperParameters["pooling"] = _get_pooling()
-            self.hyperParameters["activation"] = self.activationFunc
-        
-        elif self.modelName in _batchnorm_models:
-            self.hyperParameters["pooling"] = _get_pooling()
-            self.hyperParameters["activation"] = self.activationFunc
+        if self.modelName in _batchnorm_models:
+
             self.hyperParameters["momentum"] = _get_momentum()
             self.hyperParameters["epsilon"] = _get_epsilon()
         else:
             self.hyperParameters["alpha"] = _get_alpha(self.modelName)
-            self.hyperParameters["depthwise_multiplier"] = 1.
-            self.hyperParameters["pooling"] = _get_pooling()
-            self.hyperParameters["activation"] = self.activationFunc
             self.hyperParameters["momentum"] = _get_momentum()
             self.hyperParameters["epsilon"] = _get_epsilon()
+            self.hyperParameters["depthwise_multiplier"] = 1.
             self.checkpointName = self.modelName+'_'+str(self.hyperParameters["alpha"])
+        self.hyperParameters["pooling"] = _get_pooling()
+        self.hyperParameters["activation"] = self.activationFunc
     
     def  model_fn(self, features, labels, mode):
         """
