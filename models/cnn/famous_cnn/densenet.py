@@ -28,7 +28,7 @@ def _transition_block(x, reduction, name, activation="relu",
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     # Batch normalization layer 
-    x = keras.layers.BatchNormalization(bn_axis=axis,
+    x = keras.layers.BatchNormalization(axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
                                         name = name+"_bn")(x)
@@ -57,7 +57,7 @@ def conv_block(x, growth_rate, name, activation="relu",
         Output tensor of the block
         """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    x_c = keras.layers.BatchNormalization(bn_axis=axis,
+    x_c = keras.layers.BatchNormalization(axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
                                         name=name+"_bn")(x)
@@ -66,10 +66,10 @@ def conv_block(x, growth_rate, name, activation="relu",
     x_c = keras.layers.Conv2D(4*growth_rate,1,
                             use_bias=False,
                             name=name+"_1_conv")(x_c)
-    x_c = keras.layers.BatchNormalization(bn_axis=axis,
-                                        momentum=momentum,
-                                        epsilon=epsilon,
-                                        name=name+"_bn")(x_c)
+    x_c = keras.layers.BatchNormalization(axis=axis,
+                                          momentum=momentum,
+                                          epsilon=epsilon,
+                                          name=name+"_bn")(x_c)
     x_c = keras.layers.Activation(activation, name=name+"_"+activation)(x_c)
     # number of filters=growth_rate, filter size = 3
     x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
@@ -127,7 +127,7 @@ def densenet(blocks,
                             strides=2, 
                             use_bias=False, 
                             name=naming+"conv1/conv")(x)
-    x = keras.layers.BatchNormalization(bn_axis=axis,
+    x = keras.layers.BatchNormalization(axis=axis,
                                         momentum=momentum,
                                         epsilon=epsilon,
                                         name=naming+"conv1_bn")(x)
