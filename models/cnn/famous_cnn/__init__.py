@@ -21,7 +21,7 @@ architectures  = {
     "densenet_169": densenet.densenet_169,
     "densenet_201": densenet.densenet_201,
     "densenet_264": densenet.densenet_264,
-    "mobilenet_v1": mobilenet.mobilenet_v1,
+    "Mobilenet_v1": mobilenet.mobilenet_v1,
     "mobilenet_v2": mobilenetv2.mobilenet_v2,
     "vgg_16": vgg16.vgg_16,
     "vgg_19": vgg19.vgg_19
@@ -31,8 +31,8 @@ architectures  = {
 # (.ref https://github.com/tensorflow/models/tree/master/research/slim)
 
 checkpoints = {
-    "densenet_121": "https://drive.google.com/open?id=0B_fUSpodN0t0eW1sVk1aeWREaDA",
-    "densenet_169": "https://drive.google.com/open?id=0B_fUSpodN0t0TDB5Ti1PeTZMM2c",
+    "densenet_121": "https://drive.google.com/uc?authuser=0&id=0B_fUSpodN0t0eW1sVk1aeWREaDA&export=download",
+    "densenet_169": "https://drive.google.com/uc?authuser=0&id=0B_fUSpodN0t0TDB5Ti1PeTZMM2c&export=download",
     "mobilenet_1.0": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz",
     "mobilenet_0.50": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.5_160.tgz",
     "mobilenet_0.25": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.25_128.tgz",

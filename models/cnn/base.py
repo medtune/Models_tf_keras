@@ -291,6 +291,11 @@ class AssembleComputerVisionModel():
                                 |_train\
                                 |_eval")
         trainDir = os.path.join(jobPath,"train")
+        if not os.path.exists(trainDir):
+            os.makedirs(trainDir)
+        evalDir = os.path.join(jobPath, "eval")
+        if not os.path.exists(evalDir):
+            os.makedirs(evalDir)
         modelPath = tf.train.latest_checkpoint(trainDir)
         if modelPath:
             warmStartSetting = tf.estimator.WarmStartSettings(trainDir, vars_to_warm_start=[".*"])
@@ -304,12 +309,7 @@ class AssembleComputerVisionModel():
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
             # We create train and eval dir inside the job folder : 
-            trainDir = os.path.join(jobPath,"train")
-            if not os.path.exists(trainDir):
-                os.makedirs(trainDir)
-            evalDir = os.path.join(jobPath, "eval")
-            if not os.path.exists(evalDir):
-                os.makedirs(evalDir)
+           
             # We define warm_start settings for loading variables from checkpoint
             warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[self.modelName])
         return warmStartSetting
