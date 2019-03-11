@@ -67,7 +67,8 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         ckptInfoFile = os.path.join(downloadDir, 'checkpoint')
         if not os.path.exists(ckptInfoFile):
             with open(ckptInfoFile, "w") as checkpoint:
-                dictInfo = {"model_checkpoint_path": checkpointName+'.ckpt'}
-                checkpoint.write(str(dictInfo))
+                dictInfo = tf.train.generate_checkpoint_state_proto(downloadDir,
+                                                                    checkpointName+'.ckpt')
+                checkpoint.write(dictInfo)
     else:
         print("Imagenet weights are located in job_folder/imagenet_weights\n")
