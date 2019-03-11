@@ -36,6 +36,7 @@ def main():
     # Define warm start setting using initModel method:
     warmStartSetting = model.initModel(jobDir)
     estimator = tf.estimator.Estimator(model.model_fn,
+                                       model_dir=jobDir,
                                        config=run_config,
                                        warm_start_from=warmStartSetting)
     
@@ -46,7 +47,7 @@ def main():
                                         max_steps = max_step)
     #Define evalspec estimator
     eval_spec = tf.estimator.EvalSpec(input_fn=dataset_images.\
-                                    get_input_fn(tf.estimator.ModeKeys.EVAL, datasetSpec))       
+                                      get_input_fn(tf.estimator.ModeKeys.EVAL, datasetSpec))       
     #Run the training and evaluation (1 eval/epoch)
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
 
