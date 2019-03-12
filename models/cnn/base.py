@@ -334,10 +334,10 @@ class AssembleComputerVisionModel():
             if self.classificationLayers:
                 for size in self.classificationLayers:
                     inter = Dense(size, activation=activation)(inter)
-            if self.classificationType=="multiclass":
-                logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
-            else:
+            if self.classificationType=="multilabel":
                 logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
+            else:
+                logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
         return logits
 
     def getSummariesComputerVision(self):
