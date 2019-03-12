@@ -230,6 +230,7 @@ class AssembleComputerVisionModel():
             return tf.estimator.EstimatorSpec(mode, predictions=predictions, 
                                                 export_outputs=export_outputs)
         else :
+            print("Learning phase is:  %d" %(tf.keras.backend.learning_phase()))
             # Define the classification loss : 
             classification_loss = get_loss_function(self.classificationType)\
                                                    (labels, logits)
@@ -245,33 +246,32 @@ class AssembleComputerVisionModel():
             if mode == tf.estimator.ModeKeys.EVAL:
                 evaluationHook = tf.train.SummarySaverHook(save_steps=100,
                                 summary_op = tf.summary.image("validation_images", features))
-                #TODO: Add evaluation hooks
                 return tf.estimator.EstimatorSpec(mode, loss=total_loss,
                                                 eval_metric_ops=metrics,
                                                 evaluation_hooks=[evaluationHook])
-
-            else :
-                for name, value in metrics.items():
-                    tf.summary.scalar(name, value[1])
-                #Create the global step for monitoring the learning_rate and training:
-                global_step = tf.train.get_or_create_global_step()
-                with tf.name_scope("learning_rate"):    
-                    lr = tf.train.exponential_decay(learning_rate=self.learningRate["initial"],
-                                            global_step=global_step,
-                                            decay_steps=self.decay_steps,
-                                            decay_rate = self.learningRate["decay_factor"],
-                                            staircase=True)
-                    tf.summary.scalar('learning_rate', lr)
-                #Define Optimizer with decay learning rate:
-                with tf.name_scope("optimizer"):
-                    optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
-                    train_op = optimizer.minimize(total_loss, global_step=global_step)
-                trainHook = tf.train.SummarySaverHook(save_steps=self.num_batches_per_epoch,
-                                        summary_op=self.getSummariesComputerVision())
-                return tf.estimator.EstimatorSpec(mode, 
-                                                  loss=total_loss, 
-                                                  train_op=train_op,
-                                                  training_hooks=[trainHook])
+            for name, value in metrics.items():
+                tf.summary.scalar(name, value[1])
+            #Create the global step for monitoring the learning_rate and training:
+            global_step = tf.train.get_or_create_global_step()
+            with tf.name_scope("learning_rate"):    
+                lr = tf.train.exponential_decay(learning_rate=self.learningRate["initial"],
+                                        global_step=global_step,
+                                        decay_steps=self.decay_steps,
+                                        decay_rate = self.learningRate["decay_factor"],
+                                        staircase=True)
+                tf.summary.scalar('learning_rate', lr)
+            #Define Optimizer with decay learning rate:
+            with tf.name_scope("optimizer"):
+                optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
+                train_op = optimizer.minimize(total_loss, global_step=global_step)
+            trainHook = tf.train.SummarySaverHook(save_steps=100,
+                                    summary_op=self.getSummariesComputerVision())
+            imageHook = tf.train.SummarySaverHook(save_steps=100,
+                                                summary_op=tf.summary.image("training_images", features))                                    
+            return tf.estimator.EstimatorSpec(mode, 
+                                                loss=total_loss, 
+                                                train_op=train_op,
+                                                training_hooks=[trainHook, imageHook])
 
     def initModel(self, jobPath):
         """
