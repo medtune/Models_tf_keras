@@ -217,6 +217,7 @@ class AssembleComputerVisionModel():
         # Calculate the classification results : 
         logits = self.classify(cnn_features)
         if mode == tf.estimator.ModeKeys.PREDICT:
+            print("\nPredict Mode\n")
             _ , top_5 =  tf.nn.top_k(logits, k=5)
             predictions = {
                 'top_1': tf.argmax(logits, -1),
@@ -244,11 +245,13 @@ class AssembleComputerVisionModel():
             #'Acc_Class': tf.metrics.mean_per_class_accuracy(labels, predicted_classes,len(labels_to_names), name="per_class_acc")
             }
             if mode == tf.estimator.ModeKeys.EVAL:
+                print("\n Eval Mode\n")
                 evaluationHook = tf.train.SummarySaverHook(save_steps=100,
                                 summary_op = tf.summary.image("validation_images", features))
                 return tf.estimator.EstimatorSpec(mode, loss=classification_loss,
                                                 eval_metric_ops=metrics,
                                                 evaluation_hooks=[evaluationHook])
+            print("\n Train Mode\n")
             for name, value in metrics.items():
                 tf.summary.scalar(name, value[1])
             #Create the global step for monitoring the learning_rate and training:
@@ -349,7 +352,6 @@ class AssembleComputerVisionModel():
         graph
         """
         trainableVariables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-        print(trainableVariables)
         if trainableVariables:
             for variable in trainableVariables:
                 tf.summary.histogram(variable.name, variable)
