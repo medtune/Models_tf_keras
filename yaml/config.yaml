@@ -5,7 +5,7 @@ dataset:
   num_classes: 2
   image_type: "rgb"
 model:
-  name: "mobilenetv2"
+  name: "mobilenet_v2"
   classification_layers: []
   classification_type: "binary"
   optimizer_noun: "adam"

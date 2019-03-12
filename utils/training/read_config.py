@@ -119,7 +119,7 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
     dataSpec["image_channels"] = get_default_channels(dataSpec["image_type"])
     return dataSpec
 
-def NamesToLabels(labelFile):
+def namesToLabels(labelFile):
     """
     Given a label file, we extact two dictionnaries:
         - first maps each label name (string) to an integer value
@@ -150,6 +150,9 @@ def setDeviceConfig(distributionStrategy, xlaStrategy):
         jitLevel = tf.OptimizerOptions.ON_1
     # Define tf.ConfigProto() as config to pass to estimator config:
     config = tf.ConfigProto()
+    # NOTE: The following line is added for Nvidia RTX
+    # (https://github.com/tensorflow/tensorflow/issues/24496)
+    config.gpu_options.allow_growth = True
     #Define optimizers options based on jit_level:
     config.graph_options.optimizer_options.global_jit_level = jitLevel
     return strategy, config
