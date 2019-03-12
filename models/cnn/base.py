@@ -230,7 +230,7 @@ class AssembleComputerVisionModel():
             return tf.estimator.EstimatorSpec(mode, predictions=predictions, 
                                                 export_outputs=export_outputs)
         else :
-            print("Learning phase is:  %d" %(tf.keras.backend.learning_phase()))
+            print("Learning phase is:  " + str(tf.keras.backend.learning_phase()))
             # Define the classification loss : 
             classification_loss = get_loss_function(self.classificationType)\
                                                    (labels, logits)
