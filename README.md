@@ -15,10 +15,28 @@ pip install requirement.txt
 
 ## Usage
 ```yaml
-
-```
-```python
-
+dataset:
+  dataset_dir: 
+  file_pattern: 
+  num_samples: 
+  num_classes: 
+  image_type: 
+model:
+  name: 
+  classification_layers: 
+  classification_type: 
+  optimizer_noun: 
+  activation_func: 
+train:
+  distribute: 
+  xla : 
+  batch_size: 
+  learning_rate:
+    initial : 
+    decay_factor : 
+    before_decay : 
+  num_epochs: 
+  shuffle_buffer_size:
 ```
 
 ## Contributing
