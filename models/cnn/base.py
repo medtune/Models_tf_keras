@@ -265,7 +265,7 @@ class AssembleComputerVisionModel():
                 #Define Optimizer with decay learning rate:
                 with tf.name_scope("optimizer"):
                     optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
-                    train_op = optimizer.minimize(total_loss)
+                    train_op = optimizer.minimize(total_loss, global_step=global_step)
                 trainHook = tf.train.SummarySaverHook(save_steps=self.num_batches_per_epoch,
                                         summary_op=self.getSummariesComputerVision())
                 return tf.estimator.EstimatorSpec(mode, 
