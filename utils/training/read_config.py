@@ -152,7 +152,7 @@ def setDeviceConfig(distributionStrategy, xlaStrategy):
     config = tf.ConfigProto()
     # NOTE: The following line is added for Nvidia RTX
     # (https://github.com/tensorflow/tensorflow/issues/24496)
-    config.gpu_options.allow_growth = True
+    # config.gpu_options.allow_growth = True
     #Define optimizers options based on jit_level:
     config.graph_options.optimizer_options.global_jit_level = jitLevel
     return strategy, config
