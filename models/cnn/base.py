@@ -234,7 +234,8 @@ class AssembleComputerVisionModel():
             classification_loss = get_loss_function(self.classificationType)\
                                                    (labels, logits)
             # Add the regularization loss : 
-            total_loss = tf.losses.get_total_loss()
+            # total_loss = tf.losses.get_total_loss()
+
             # Metrics 
             metrics = {
             'Accuracy': tf.metrics.accuracy(labels, logits, name="acc_op"),
@@ -243,13 +244,11 @@ class AssembleComputerVisionModel():
             #'Acc_Class': tf.metrics.mean_per_class_accuracy(labels, predicted_classes,len(labels_to_names), name="per_class_acc")
             }
             if mode == tf.estimator.ModeKeys.EVAL:
-                tf.keras.backend.set_learning_phase(0)
                 evaluationHook = tf.train.SummarySaverHook(save_steps=100,
                                 summary_op = tf.summary.image("validation_images", features))
-                return tf.estimator.EstimatorSpec(mode, loss=total_loss,
+                return tf.estimator.EstimatorSpec(mode, loss=classification_loss,
                                                 eval_metric_ops=metrics,
                                                 evaluation_hooks=[evaluationHook])
-            tf.keras.backend.set_learning_phase(1)
             for name, value in metrics.items():
                 tf.summary.scalar(name, value[1])
             #Create the global step for monitoring the learning_rate and training:
@@ -264,15 +263,15 @@ class AssembleComputerVisionModel():
             #Define Optimizer with decay learning rate:
             with tf.name_scope("optimizer"):
                 optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
-                train_op = optimizer.minimize(total_loss, global_step=global_step)
+                train_op = optimizer.minimize(classification_loss, global_step=global_step)
             trainHook = tf.train.SummarySaverHook(save_steps=100,
                                     summary_op=self.getSummariesComputerVision())
             imageHook = tf.train.SummarySaverHook(save_steps=100,
                                                 summary_op=tf.summary.image("training_images", features))                                    
             return tf.estimator.EstimatorSpec(mode, 
-                                                loss=total_loss, 
-                                                train_op=train_op,
-                                                training_hooks=[trainHook, imageHook])
+                                              loss=classification_loss, 
+                                              train_op=train_op,
+                                              training_hooks=[trainHook, imageHook])
 
     def initModel(self, jobPath):
         """
@@ -351,6 +350,7 @@ class AssembleComputerVisionModel():
         """
         graph = tf.get_default_graph()
         trainableVariables = graph.get_collection("TRAINABLE_VARIABLES ")
+        print(trainableVariables)
         if trainableVariables:
             for variable in trainableVariables:
                 tf.summary.histogram(variable.name, variable)
