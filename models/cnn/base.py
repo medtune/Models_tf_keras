@@ -348,8 +348,7 @@ class AssembleComputerVisionModel():
         buffer resulting from merging all summaries present in the
         graph
         """
-        graph = tf.get_default_graph()
-        trainableVariables = graph.get_collection("TRAINABLE_VARIABLES ")
+        trainableVariables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         print(trainableVariables)
         if trainableVariables:
             for variable in trainableVariables:
