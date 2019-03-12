@@ -170,7 +170,7 @@ def get_input_fn(mode, datasetSpecs):
                 return dataset
         else:
             def input_fn():
-                dataset = get_Mura(phase_name,
+                dataset = get_GED(phase_name,
                                     file_pattern=file_pattern,
                                     image_size=datasetSpecs.get("image_size"),
                                     image_channels=datasetSpecs.get("image_channels"),

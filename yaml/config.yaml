@@ -1,13 +1,13 @@
 dataset:
-  dataset_dir: "D:/MURA-v1.1"
-  file_pattern: "phase_name/*/*/*/*.png"
-  num_samples: 36807
-  num_classes: 2
-  image_type: "rgb"
+  dataset_dir: "G:/rvl-cdip-jpeg"
+  file_pattern: "labels/phase_name.txt"
+  num_samples: 320000
+  num_classes: 16
+  image_type: "gray"
 model:
   name: "mobilenet_v2"
   classification_layers: []
-  classification_type: "binary"
+  classification_type: "multiclass"
   optimizer_noun: "adam"
   activation_func: "relu"
 train:
@@ -19,4 +19,4 @@ train:
     decay_factor : 0.95
     before_decay : 1
   num_epochs: 100
-  shuffle_buffer_size: 1024
+  shuffle_buffer_size: 512
