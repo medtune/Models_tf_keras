@@ -230,7 +230,6 @@ class AssembleComputerVisionModel():
             return tf.estimator.EstimatorSpec(mode, predictions=predictions, 
                                                 export_outputs=export_outputs)
         else :
-            print("Learning phase is:  " + str(tf.keras.backend.learning_phase()))
             # Define the classification loss : 
             classification_loss = get_loss_function(self.classificationType)\
                                                    (labels, logits)
@@ -244,11 +243,13 @@ class AssembleComputerVisionModel():
             #'Acc_Class': tf.metrics.mean_per_class_accuracy(labels, predicted_classes,len(labels_to_names), name="per_class_acc")
             }
             if mode == tf.estimator.ModeKeys.EVAL:
+                tf.keras.backend.set_learning_phase(0)
                 evaluationHook = tf.train.SummarySaverHook(save_steps=100,
                                 summary_op = tf.summary.image("validation_images", features))
                 return tf.estimator.EstimatorSpec(mode, loss=total_loss,
                                                 eval_metric_ops=metrics,
                                                 evaluation_hooks=[evaluationHook])
+            tf.keras.backend.set_learning_phase(1)
             for name, value in metrics.items():
                 tf.summary.scalar(name, value[1])
             #Create the global step for monitoring the learning_rate and training:
