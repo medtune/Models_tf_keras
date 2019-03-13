@@ -4,6 +4,7 @@ VGG19
 - [Very Deep Convolutional Networks for Large-Scale Image Recognition](
     https://arxiv.org/abs/1409.1556)
 """
+import tensorflow as tf
 import tensorflow.keras as keras
 
 def vgg_19(inputs,
@@ -22,115 +23,120 @@ def vgg_19(inputs,
         - Tensor representing features 
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    naming = 'Vgg19_'
+    naming = 'vgg_19'
 
-    #Block 1:
-    x = keras.layers.Conv2D(64, (3,3),
-                            activation=activation,
-                            padding = 'same',
-                            name = naming+'block1_conv1')(inputs)
-    
-    x = keras.layers.Conv2D(64, (3,3),
-                            activation=activation,
-                            padding = 'same',
-                            name = naming+'block1_conv2')(x)
-    
-    x = keras.layers.MaxPooling2D((2, 2), 
-                                strides=(2, 2),
-                                name=naming+'block1_pool')(x)
+    with tf.name_scope(naming):
+        #Block 1:
+        with tf.name_scope('conv1'):
+            x = keras.layers.Conv2D(64, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv1_1')(inputs)
+            
+            x = keras.layers.Conv2D(64, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv1_2')(x)
+        
+        x = keras.layers.MaxPooling2D((2, 2), 
+                                    strides=(2, 2),
+                                    name='pool1')(x)
 
-    #Block 2:
-    x = keras.layers.Conv2D(128, (3,3),
-                            activation=activation,
-                            padding = 'same',
-                            name = naming+'block2_conv1')(x)
-    
-    x = keras.layers.Conv2D(128, (3,3),
-                            activation=activation,
-                            padding = 'same',
-                            name = naming+'block2_conv2')(x)
-    
-    x = keras.layers.MaxPooling2D((2, 2), 
-                                strides=(2, 2),
-                                name=naming+'block2_pool')(x)
+        #Block 2:
+        with tf.name_scope('conv2'):
+            x = keras.layers.Conv2D(128, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv2_1')(x)
+            
+            x = keras.layers.Conv2D(128, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv2_2')(x)
+        
+        x = keras.layers.MaxPooling2D((2, 2), 
+                                    strides=(2, 2),
+                                    name='pool2')(x)
 
-    #Block 3:
-    x = keras.layers.Conv2D(256, (3,3),
+        #Block 3:
+        with tf.name_scope('conv3'):
+            x = keras.layers.Conv2D(256, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv3_1')(x)
+            
+            x = keras.layers.Conv2D(256, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv3_2')(x)
+            
+            x = keras.layers.Conv2D(256, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block3_conv1')(x)
-    
-    x = keras.layers.Conv2D(256, (3,3),
+                            padding='same',
+                            name='conv3_3')(x)
+        
+            x = keras.layers.Conv2D(256, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block3_conv2')(x)
-    
-    x = keras.layers.Conv2D(256, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block3_conv3')(x)
-    
-    x = keras.layers.Conv2D(256, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block3_conv4')(x)
-    
-    x = keras.layers.MaxPooling2D((2, 2), 
-                                strides=(2, 2),
-                                name=naming+'block3_pool')(x)
+                            padding='same',
+                            name='conv3_4')(x)
+            
+        x = keras.layers.MaxPooling2D((2, 2), 
+                                    strides=(2, 2),
+                                    name='pool3')(x)
 
-    #Block 4:
-    x = keras.layers.Conv2D(512, (3,3),
+        #Block 4:
+        with tf.name_scope('conv4'):
+            x = keras.layers.Conv2D(512, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv4_1')(x)
+            
+            x = keras.layers.Conv2D(512, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv4_2')(x)
+            
+            x = keras.layers.Conv2D(512, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block4_conv1')(x)
-    
-    x = keras.layers.Conv2D(512, (3,3),
+                            padding='same',
+                            name='conv4_3')(x)
+            
+            x = keras.layers.Conv2D(512, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block4_conv2')(x)
-    
-    x = keras.layers.Conv2D(512, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block4_conv3')(x)
-    
-    x = keras.layers.Conv2D(512, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block4_conv4')(x)
-    
-    x = keras.layers.MaxPooling2D((2, 2), 
-                                strides=(2, 2),
-                                name=naming+'block4_pool')(x)
+                            padding='same',
+                            name='conv4_4')(x)
+        
+        x = keras.layers.MaxPooling2D((2, 2), 
+                                    strides=(2, 2),
+                                    name='pool4')(x)
 
-    #Block 5:
-    x = keras.layers.Conv2D(512, (3,3),
+        #Block 5:
+        with tf.name_scope('conv5'):
+            x = keras.layers.Conv2D(512, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv5_1')(x)
+            
+            x = keras.layers.Conv2D(512, (3,3),
+                                    activation=activation,
+                                    padding = 'same',
+                                    name = 'conv5_2')(x)
+            
+            x = keras.layers.Conv2D(512, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block5_conv1')(x)
-    
-    x = keras.layers.Conv2D(512, (3,3),
+                            padding='same',
+                            name='conv5_3')(x)
+            
+            x = keras.layers.Conv2D(512, (3, 3),
                             activation=activation,
-                            padding = 'same',
-                            name = naming+'block5_conv2')(x)
-    
-    x = keras.layers.Conv2D(512, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block5_conv3')(x)
-    
-    x = keras.layers.Conv2D(512, (3, 3),
-                      activation=activation,
-                      padding='same',
-                      name='block5_conv4')(x)
-    
-    x = keras.layers.MaxPooling2D((2, 2), 
-                                strides=(2, 2),
-                                name=naming+'block5_pool')(x)
-
-    if pooling == 'avg':
-        x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
-    elif pooling == 'max':
-        x = keras.layers.GlobalMaxPool2D(name=naming+'max_pool')(x)
+                            padding='same',
+                            name='conv5_4')(x)
+        
+        x = keras.layers.MaxPooling2D((2, 2), 
+                                    strides=(2, 2),
+                                    name='pool5')(x)
+        if pooling == 'avg':
+            x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
+        elif pooling == 'max':
+            x = keras.layers.GlobalMaxPool2D(name=naming+'max_pool')(x)
     return x
