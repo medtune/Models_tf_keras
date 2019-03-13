@@ -15,7 +15,7 @@ train:
   xla : false
   batch_size: 8
   learning_rate:
-    initial : 0.1
+    initial : 0.001
     decay_factor : 0.95
     before_decay : 1
   num_epochs: 100

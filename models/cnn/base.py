@@ -314,10 +314,10 @@ class AssembleComputerVisionModel():
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
-            # We create train and eval dir inside the job folder : 
-           
+            # We retrieve naming according to the model name : 
+            variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
             # We define warm_start settings for loading variables from checkpoint
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[self.modelName])
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
         return warmStartSetting
 
     def classify(self, features):
