@@ -106,7 +106,7 @@ def _inverted_res_block(inputs,
     return x
 
 def mobilenet_v2(inputs,
-                alpha=1.0,
+                alpha,
                 depthwise_multiplier=1,
                 pooling=None,
                 momentum=0.99,

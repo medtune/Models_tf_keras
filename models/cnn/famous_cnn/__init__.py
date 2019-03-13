@@ -47,7 +47,7 @@ checkpoints = {
     "densenet_121": "https://drive.google.com/uc?authuser=0&id=0B_fUSpodN0t0eW1sVk1aeWREaDA&export=download",
     "densenet_169": "https://drive.google.com/uc?authuser=0&id=0B_fUSpodN0t0TDB5Ti1PeTZMM2c&export=download",
     "mobilenet_v1_1.0": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_1.0_224.tgz",
-    "mobilenet_v1_0.50": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.5_160.tgz",
+    "mobilenet_v1_0.5": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.5_160.tgz",
     "mobilenet_v1_0.25": "http://download.tensorflow.org/models/mobilenet_v1_2018_02_22/mobilenet_v1_0.25_128.tgz",
     "mobilenet_v2_1.0": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.0_224.tgz",
     "mobilenet_v2_1.4": "https://storage.googleapis.com/mobilenet_v2/checkpoints/mobilenet_v2_1.4_224.tgz",

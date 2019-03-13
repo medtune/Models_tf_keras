@@ -11,17 +11,18 @@ Mobilenet models have two additionnal arguments:
 alpha, depth_multiplier
 """
 _native_optimizers = {
-    "adadelta": tf.train.AdadeltaOptimizer,
-    "adagrad": tf.train.AdagradOptimizer,
-    "adam": tf.train.AdamOptimizer,
-    "ftrl": tf.train.FtrlOptimizer,
-    "sgd": tf.train.GradientDescentOptimizer,
-    "momentum": tf.train.MomentumOptimizer,
-    "rmsprop": tf.train.RMSPropOptimizer
+    "adadelta": ('Adadelta',tf.train.AdadeltaOptimizer),
+    "adagrad": ('Adagrad',tf.train.AdagradOptimizer),
+    "adam": ('Adam',tf.train.AdamOptimizer),
+    "ftrl": ('Ftrl',tf.train.FtrlOptimizer),
+    "sgd": ('GradientDescent',tf.train.GradientDescentOptimizer),
+    "momentum": ('Momentum',tf.train.MomentumOptimizer),
+    "rmsprop": ('RMSProp',tf.train.RMSPropOptimizer)
 }
 
 _non_batchnorm_models = ["vgg_16", "vgg_19"]
 _batchnorm_models = ["densenet_121","densenet_169","densenet_201", "densenet_264"]
+_mobilenet_model = ["mobilenet_v1", "mobilenet_v2"]
 
 def _get_loss_function(classification_type):
         """
@@ -52,10 +53,10 @@ def _get_alpha(modelName):
     if modelName not in ["mobilenet_v1", "mobilenet_v2"]:
         pass
     elif modelName == "mobilenet_v1":
-        allowedValues = [0.35, 0.50, 0.75, 1.0]
+        allowedValues = [0.25, 0.50, 1.0]
         while alpha not in allowedValues:
             demand = "Choose between the following values of alpha:\
-                    [0.35, 0.50, 0.75, 1.0]\n"
+                    [0.25, 0.50, 1.0]\n"
             alpha = float(get_input(demand))
     else:
         allowedValues = [1.0, 1.4]
@@ -161,13 +162,59 @@ class AssembleComputerVisionModel():
         self.learningRate = params["learning_rate"]
         # String representing the noun of the optimizer we want to use 
         # (ref. list of nouns)
-        self.optimizerNoun = params["optimizer_noun"]
+        _optimizer= _native_optimizers.get(params["optimizer_noun"])
+        self.optimizerNoun = _optimizer[0]
+        self.optimizerObject = _optimizer[1]
         # Int. we use it to calculate the decay step 
         self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         self.hyperParameters = {}
         del params
-
+    
+    def initModel(self, jobPath):
+        """
+        Given a job folder path, we check the existence of 
+        the checkpoint from a previous training session.
+        If it doesn't exists, we download the "imagenet"
+        checkpoint model using modelNaming.
+        """
+        if jobPath is None:
+            raise ValueError("Path must not be None. Please provide\
+                            the folder path  from which you wish to restore/finetune\
+                            your model.\
+                            Example:\
+                            |_ jobPath\
+                                |_imagenet_weights\
+                                |_train\
+                                |_eval")
+        # TODO: Check how to configure training dir in Estimator
+        trainDir = os.path.join(jobPath,"train")
+        if not os.path.exists(trainDir):
+            os.makedirs(trainDir)
+        # TODO: Check how to configure eval dir in Estimator
+        evalDir = os.path.join(jobPath, "eval")
+        if not os.path.exists(evalDir):
+            os.makedirs(evalDir)
+        modelPath = tf.train.latest_checkpoint(jobPath)
+        if modelPath:
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
+        else:
+            # We call 'get_hyperParameters' method in order to define the model
+            # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
+            self.get_hyperParameters()
+            downloadDir = os.path.join(jobPath,"imagenet_weights")
+            print("Imagenet weights Download direction :" + downloadDir +"\n")
+            modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt*'))
+            if not modelPath:
+                # Extract url from checkpoints dict using the attribute checkpointName 
+                url = famous_cnn.checkpoints.get(self.checkpointName)
+                monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
+            # We retrieve naming according to the model name : 
+            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[^/%s]'%(self.optimizerNoun)
+            # We define warm_start settings for loading variables from checkpoint
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
+        return warmStartSetting
+    
     def get_modelName(self):
         return self.modelName
 
@@ -187,19 +234,21 @@ class AssembleComputerVisionModel():
         # Return : 
             A dict containing the value of each hyperparameter
         """
-        if self.modelName in _batchnorm_models:
-
-            self.hyperParameters["momentum"] = _get_momentum()
-            self.hyperParameters["epsilon"] = _get_epsilon()
-        else:
+        if self.modelName in _mobilenet_model:
             self.hyperParameters["alpha"] = _get_alpha(self.modelName)
+            self.hyperParameters["depthwise_multiplier"] = 1
             self.hyperParameters["momentum"] = _get_momentum()
             self.hyperParameters["epsilon"] = _get_epsilon()
-            self.hyperParameters["depthwise_multiplier"] = 1.
-            self.checkpointName = self.modelName+'_'+str(self.hyperParameters["alpha"])
+            self.checkpointName = self.modelName + '_' + str(self.hyperParameters["alpha"])
+        else:
+            if self.modelName in _batchnorm_models:
+                self.hyperParameters["momentum"] = _get_momentum()
+                self.hyperParameters["epsilon"] = _get_epsilon()
+            self.hyperParameters["activation"] = self.activationFunc
+            
         self.hyperParameters["pooling"] = _get_pooling()
-        self.hyperParameters["activation"] = self.activationFunc
-    
+        
+
     def  model_fn(self, features, labels, mode):
         """
         Model_fn function that we will pass to the 
@@ -213,7 +262,7 @@ class AssembleComputerVisionModel():
             model_fn function
         """
         # Calculate CNN features (last layer output) :
-        cnn_features = self.cnn_model(features)
+        cnn_features = self.cnn_model(features, **self.hyperParameters)
         # Calculate the classification results : 
         logits = self.classify(cnn_features)
         if mode == tf.estimator.ModeKeys.PREDICT:
@@ -265,7 +314,7 @@ class AssembleComputerVisionModel():
                 tf.summary.scalar('learning_rate', lr)
             #Define Optimizer with decay learning rate:
             with tf.name_scope("optimizer"):
-                optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
+                optimizer = self.optimizerObject(lr)
                 train_op = optimizer.minimize(classification_loss, global_step=global_step)
             trainHook = tf.train.SummarySaverHook(save_steps=100,
                                     summary_op=self.getSummariesComputerVision(features, labels))
@@ -276,49 +325,7 @@ class AssembleComputerVisionModel():
                                               train_op=train_op,
                                               training_hooks=[trainHook, imageHook])
 
-    def initModel(self, jobPath):
-        """
-        Given a job folder path, we check the existence of 
-        the checkpoint from a previous training session.
-        If it doesn't exists, we download the "imagenet"
-        checkpoint model using modelNaming.
-        """
-        if jobPath is None:
-            raise ValueError("Path must not be None. Please provide\
-                            the folder path  from which you wish to restore/finetune\
-                            your model.\
-                            Example:\
-                            |_ jobPath\
-                                |_imagenet_weights\
-                                |_train\
-                                |_eval")
-        # TODO: Check how to configure training dir in Estimator
-        trainDir = os.path.join(jobPath,"train")
-        if not os.path.exists(trainDir):
-            os.makedirs(trainDir)
-        # TODO: Check how to configure eval dir in Estimator
-        evalDir = os.path.join(jobPath, "eval")
-        if not os.path.exists(evalDir):
-            os.makedirs(evalDir)
-        modelPath = tf.train.latest_checkpoint(jobPath)
-        if modelPath:
-            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
-        else:
-            # We call 'get_hyperParameters' method in order to define the model
-            # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
-            self.get_hyperParameters()
-            downloadDir = os.path.join(jobPath,"imagenet_weights")
-            print("Imagenet weights Download direction :" + downloadDir +"\n")
-            modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt*'))
-            if not modelPath:
-                # Extract url from checkpoints dict using the attribute checkpointName 
-                url = famous_cnn.checkpoints.get(self.checkpointName)
-                monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
-            # We retrieve naming according to the model name : 
-            variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
-            # We define warm_start settings for loading variables from checkpoint
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
-        return warmStartSetting
+
 
     def classify(self, features):
         """

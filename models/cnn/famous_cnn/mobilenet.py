@@ -74,7 +74,6 @@ def _conv_block(inputs,
         x = keras.layers.ReLU(6., name='relu')(x)
     return x
 
-
 def _depthwise_conv(inputs,
                     filters,
                     alpha,
@@ -105,6 +104,7 @@ def _depthwise_conv(inputs,
     else:
         x = keras.layers.ZeroPadding2D(((0, 1), (0, 1)),
                                  name='Conv2d_%d_pad' % block_id)(inputs)
+
     with tf.name_scope('Conv2d_%d_depthwise' % block_id):
         x = keras.layers.DepthwiseConv2D((3, 3),
                                 padding='same' if strides == (1, 1) else 'valid',
@@ -117,6 +117,7 @@ def _depthwise_conv(inputs,
                                             epsilon=epsilon,
                                             name='BatchNorm')(x)
         x = keras.layers.ReLU(6., name='Relu6')(x)
+
     with tf.name_scope('Conv2d_%d_pointwise' % block_id):
         x = keras.layers.Conv2D(pointwise_conv_filters, (1, 1),
                         padding='same',
@@ -127,15 +128,15 @@ def _depthwise_conv(inputs,
                                             momentum=momentum,
                                             epsilon=epsilon,
                                             name='BatchNorm')(x)
-        x = keras.layers.RELU(6., name='Relu6')(x)
+        x = keras.layers.ReLU(6., name='Relu6')(x)
     return x
 
 def mobilenet_v1(inputs,
-                alpha=1.0,
-                depthwise_multiplier=1,
-                pooling=None,
-                momentum=0.99,
-                epsilon=0.001):
+                 alpha,
+                 depthwise_multiplier=1,
+                 pooling=None,
+                 momentum=0.99,
+                 epsilon=0.001):
     """
     Args:
         alpha: alpha: controls the width of the network.
@@ -155,9 +156,10 @@ def mobilenet_v1(inputs,
     axis  = keras.backend.image_data_format()
     if depthwise_multiplier <= 0:
         raise ValueError('depth_multiplier is not greater than zero.')
-    if alpha not in [0.25, 0.50, 0.75, 1.0]:
+    print('\n Here is alpha:'+ str(alpha))
+    if alpha not in [0.25, 0.50, 1.0]:
         raise ValueError('alpha can be one of'
-                        '`0.25`, `0.50`, `0.75` or `1.0` only.')
+                        '`0.25`, `0.50` or `1.0` only.')
     if axis ==  'channels_first':
         keras.backend.set_image_data_format('channels_last')
     with tf.name_scope(naming):

@@ -26,20 +26,21 @@ def main():
     strategy, config = read_config.setDeviceConfig(deviceSpec["distribute"],
                                                     deviceSpec["xla"]  )
     model = base.AssembleComputerVisionModel(modelSpec)
-    
+    # Define warm start setting using initModel method:
+    warmStartSetting = model.initModel(jobDir)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps = model.num_batches_per_epoch,
                                         keep_checkpoint_max=datasetSpec["num_epochs"],
                                         train_distribute=strategy,
                                         eval_distribute=strategy,
                                         session_config=config)
-    # Define warm start setting using initModel method:
-    warmStartSetting = model.initModel(jobDir)
+
+    
     estimator = tf.estimator.Estimator(model.model_fn,
                                        model_dir=jobDir,
                                        config=run_config,
                                        warm_start_from=warmStartSetting)
-    
+
     #Define trainspec estimator, including max number of step for training
     max_step = model.num_batches_per_epoch * datasetSpec["num_epochs"]
     train_spec = tf.estimator.TrainSpec(input_fn = dataset_images.\
