@@ -22,9 +22,7 @@ def vgg_19(inputs,
     Returns:
         - Tensor representing features 
     """
-    axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     naming = 'vgg_19'
-
     with tf.name_scope(naming):
         #Block 1:
         with tf.name_scope('conv1'):

@@ -104,28 +104,30 @@ def _depthwise_conv(inputs,
         x = inputs
     else:
         x = keras.layers.ZeroPadding2D(((0, 1), (0, 1)),
-                                 name='conv_pad_%d' % block_id)(inputs)
-    with tf.name_scope('conv_dw_%d' % block_id):
+                                 name='Conv2d_%d_pad' % block_id)(inputs)
+    with tf.name_scope('Conv2d_%d_depthwise' % block_id):
         x = keras.layers.DepthwiseConv2D((3, 3),
                                 padding='same' if strides == (1, 1) else 'valid',
                                 depth_multiplier=depthwise_multiplier,
                                 strides=strides,
-                                use_bias=False)(x)
+                                use_bias=False,
+                                name='depthwise')(x)
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
-                                            name='bn' % block_id)(x)
-        x = keras.layers.ReLU(6., name='relu' % block_id)(x)
-    with tf.name_scope('conv_pw_%d' % block_id):
+                                            name='BatchNorm')(x)
+        x = keras.layers.ReLU(6., name='Relu6')(x)
+    with tf.name_scope('Conv2d_%d_pointwise' % block_id):
         x = keras.layers.Conv2D(pointwise_conv_filters, (1, 1),
                         padding='same',
                         use_bias=False,
-                        strides=(1, 1))(x)
+                        strides=(1, 1),
+                        name='Conv2D')(x)
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
-                                            name='bn' % block_id)(x)
-        x = keras.layers.RELU(6., name='relu')(x)
+                                            name='BatchNorm')(x)
+        x = keras.layers.RELU(6., name='Relu6')(x)
     return x
 
 def mobilenet_v1(inputs,
