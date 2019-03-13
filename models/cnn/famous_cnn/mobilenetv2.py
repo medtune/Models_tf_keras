@@ -7,7 +7,7 @@ This file contains building code for MobileNetV2, based on
     (https://github.com/JonathanCMitchell/mobilenet_v2_keras)
     (https://github.com/keras-team/keras-applications/blob/master/keras_applications/mobilenet_v2.py)
 """
-
+import tensorflow as tf
 import tensorflow.keras as keras
 
 
@@ -50,7 +50,6 @@ def _inverted_res_block(inputs,
                         alpha,
                         filters,
                         block_id,
-                        name_prefix,
                         momentum=0.999,
                         epsilon=1e-3):
     
@@ -58,47 +57,52 @@ def _inverted_res_block(inputs,
     pointwise_conv_filters = int(filters * alpha)
     pointwise_filters = _make_divisible(pointwise_conv_filters, 8)
     x = inputs
-    prefix = name_prefix + 'block_{}_'.format(block_id)
-
+    
     if block_id:
-        # Expand
-        x = keras.layers.Conv2D(expansion * in_channels,
-                                kernel_size=1,
-                                padding='same',
-                                use_bias=False,
-                                activation=None,
-                                name=prefix + 'expand')(x)
-        x = keras.layers.BatchNormalization(epsilon=epsilon,
-                                            momentum=momentum,
-                                            name=prefix + 'expand_BN')(x)
-        x = keras.layers.ReLU(6., name=prefix + 'expand_relu')(x)
+        prefix = 'expanded_conv_{}'.format(block_id)
     else:
-        prefix = 'expanded_conv_'
+        prefix = 'expanded_conv'
 
-    if stride == 2:
-        x = keras.layers.ZeroPadding2D(padding=correct_pad(x, 3),
-                                 name=prefix + 'pad')(x)
-    x = keras.layers.DepthwiseConv2D(kernel_size=3,
-                                     strides=stride,
-                                     activation=None,
-                                     use_bias=False,
-                                     padding='same' if stride == 1 else 'valid',
-                                     name=prefix + 'depthwise')(x)
-    x = keras.layers.BatchNormalization(epsilon=epsilon,
-                                        momentum=momentum,
-                                        name=prefix + 'depthwise_BN')(x)
+    with tf.name_scope(prefix):
+        with tf.name_scope('expand'):
+            x = keras.layers.Conv2D(expansion * in_channels,
+                                    kernel_size=1,
+                                    padding='same',
+                                    use_bias=False,
+                                    activation=None,
+                                    name='Conv2D')(x)
+            x = keras.layers.BatchNormalization(epsilon=epsilon,
+                                                momentum=momentum,
+                                                name='BatchNorm')(x)
+            x = keras.layers.ReLU(6., name='Relu6')(x)
 
-    x = keras.layers.ReLU(6., name=prefix + 'depthwise_relu')(x)
-    x = keras.layers.Conv2D(pointwise_filters,
-                            kernel_size=1,
-                            padding='same',
-                            use_bias=False,
-                            activation=None,
-                            name=prefix + 'project')(x)
-    x = keras.layers.BatchNormalization(epsilon=epsilon, 
-                                        momentum=momentum, name=prefix + 'project_BN')(x)
-    if in_channels == pointwise_filters and stride == 1:
-        return keras.layers.Add(name=prefix + 'add')([inputs, x])
+
+        if stride == 2:
+            x = keras.layers.ZeroPadding2D(padding=correct_pad(x, 3),
+                                    name='pad')(x)
+        with tf.name_scope('depthwise'):
+            x = keras.layers.DepthwiseConv2D(kernel_size=3,
+                                            strides=stride,
+                                            activation=None,
+                                            use_bias=False,
+                                            padding='same' if stride == 1 else 'valid',
+                                            name='Conv2D')(x)
+            x = keras.layers.BatchNormalization(epsilon=epsilon,
+                                                momentum=momentum,
+                                                name='BatchNorm')(x)
+
+            x = keras.layers.ReLU(6., name='Relu6')(x)
+        with tf.name_scope('project'):
+            x = keras.layers.Conv2D(pointwise_filters,
+                                    kernel_size=1,
+                                    padding='same',
+                                    use_bias=False,
+                                    activation=None,
+                                    name='Conv2D')(x)
+            x = keras.layers.BatchNormalization(epsilon=epsilon, 
+                                                momentum=momentum, name='BatchNorm')(x)
+        if in_channels == pointwise_filters and stride == 1:
+            return keras.layers.Add(name='add')([inputs, x])
     return x
 
 def mobilenet_v2(inputs,
@@ -124,100 +128,105 @@ def mobilenet_v2(inputs,
         output features from MobilenetV2 
     """
     
-    naming = 'MobilenetV2_'
+    naming = 'MobilenetV2'
     axis  = keras.backend.image_data_format() #Channels axis
     if depthwise_multiplier <= 0:
         raise ValueError('depth_multiplier is not greater than zero.')
     if axis ==  'channels_first':
         keras.backend.set_image_data_format('channels_last')
     first_block_filter = _make_divisible(32*alpha, 8)
-    x = keras.layers.ZeroPadding2D(padding=correct_pad(inputs, kernel_size=3),
-                                  name=naming+'conv1_pad')(inputs)
-    x1 = keras.layers.Conv2D(first_block_filter,
-                            kernel_size=3,
-                            strides=(2, 2),
-                            padding='valid',
-                            use_bias=False,
-                            name=naming+'conv1')(x)
-    x2 = keras.layers.BatchNormalization(
-        epsilon=epsilon, momentum=momentum, name=naming+'conv1_bn')(x1)                  
-    x3 = keras.layers.ReLU(6., name=naming+'conv1_relu')(x2)
-    x4 = _inverted_res_block(x3, filters=16, alpha=alpha, stride=1,
-                            expansion=1, block_id=0, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-
-    x5 = _inverted_res_block(x4, filters=24, alpha=alpha, stride=2,
-                            expansion=6, block_id=1, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-    x6 = _inverted_res_block(x5, filters=24, alpha=alpha, stride=1,
-                            expansion=6, block_id=2, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-
-    x7 = _inverted_res_block(x6, filters=32, alpha=alpha, stride=2,
-                            expansion=6, block_id=3, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-    x8 = _inverted_res_block(x7, filters=32, alpha=alpha, stride=1,
-                            expansion=6, block_id=4, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-    x9 = _inverted_res_block(x8, filters=32, alpha=alpha, stride=1,
-                             expansion=6, block_id=5, name_prefix=naming,
-                            momentum=momentum, epsilon=epsilon)
-
-    x10 = _inverted_res_block(x9, filters=64, alpha=alpha, stride=2,
-                              expansion=6, block_id=6, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x11 = _inverted_res_block(x10, filters=64, alpha=alpha, stride=1,
-                              expansion=6, block_id=7, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x12 = _inverted_res_block(x11, filters=64, alpha=alpha, stride=1,
-                              expansion=6, block_id=8, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x13 = _inverted_res_block(x12, filters=64, alpha=alpha, stride=1,
-                              expansion=6, block_id=9, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-
-    x14 = _inverted_res_block(x13, filters=96, alpha=alpha, stride=1,
-                              expansion=6, block_id=10, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x15 = _inverted_res_block(x14, filters=96, alpha=alpha, stride=1,
-                              expansion=6, block_id=11, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x16 = _inverted_res_block(x15, filters=96, alpha=alpha, stride=1,
-                              expansion=6, block_id=12, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-
-    x17 = _inverted_res_block(x16, filters=160, alpha=alpha, stride=2,
-                              expansion=6, block_id=13, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x18 = _inverted_res_block(x17, filters=160, alpha=alpha, stride=1,
-                              expansion=6, block_id=14, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    x19 = _inverted_res_block(x18, filters=160, alpha=alpha, stride=1,
-                              expansion=6, block_id=15, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-
-    x20  = _inverted_res_block(x19, filters=320, alpha=alpha, stride=1,
-                              expansion=6, block_id=16, name_prefix=naming,
-                              momentum=momentum, epsilon=epsilon)
-    # no alpha applied to last conv as stated in the paper:
-    # if the width multiplier is greater than 1 we
-    # increase the number of output channels
-    if alpha > 1.0:
-        last_block_filters = _make_divisible(1280 * alpha, 8)
-    else:
-        last_block_filters = 1280
-    #TODO: Check for layers name (from checkpoints) to correct setup
-    x21 = keras.layers.Conv2D(last_block_filters,
-                              kernel_size=1,
-                              use_bias=False,
-                              name=naming+'conv_1')(x20)
-    x22 = keras.layers.BatchNormalization(epsilon=epsilon,
-                                          momentum=momentum,
-                                          name=naming+'conv_1_bn')(x21)
-    x_final = keras.layers.ReLU(6., name=naming+'out_relu')(x22)
-    if pooling == 'avg':
-        x_final = keras.layers.GlobalAveragePooling2D()(x_final)
-    else:
-        x_final = keras.layers.GlobalMaxPool2D()(x_final)
     
+    with tf.name_scope(naming):
+
+        with tf.name_scope('Conv'):
+            x = keras.layers.ZeroPadding2D(padding=correct_pad(inputs, kernel_size=3),
+                                        name='pad')(inputs)
+            x = keras.layers.Conv2D(first_block_filter,
+                                    kernel_size=3,
+                                    strides=(2, 2),
+                                    padding='valid',
+                                    use_bias=False,
+                                    name='Conv2D')(x)
+            x = keras.layers.BatchNormalization(
+                epsilon=epsilon, momentum=momentum, name='BatchNorm')(x)                  
+            x = keras.layers.ReLU(6., name='Relu6')(x)
+
+        x = _inverted_res_block(x, filters=16, alpha=alpha, stride=1,
+                                expansion=1, block_id=None,
+                                momentum=momentum, epsilon=epsilon)
+
+        x = _inverted_res_block(x, filters=24, alpha=alpha, stride=2,
+                                expansion=6, block_id=1,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=24, alpha=alpha, stride=1,
+                                expansion=6, block_id=2,
+                                momentum=momentum, epsilon=epsilon)
+
+        x = _inverted_res_block(x, filters=32, alpha=alpha, stride=2,
+                                expansion=6, block_id=3,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=32, alpha=alpha, stride=1,
+                                expansion=6, block_id=4,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=32, alpha=alpha, stride=1,
+                                expansion=6, block_id=5,
+                                momentum=momentum, epsilon=epsilon)
+
+        x = _inverted_res_block(x, filters=64, alpha=alpha, stride=2,
+                                expansion=6, block_id=6,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=64, alpha=alpha, stride=1,
+                                expansion=6, block_id=7,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=64, alpha=alpha, stride=1,
+                                expansion=6, block_id=8,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=64, alpha=alpha, stride=1,
+                                expansion=6, block_id=9,
+                                momentum=momentum, epsilon=epsilon)
+
+        x = _inverted_res_block(x, filters=96, alpha=alpha, stride=1,
+                                expansion=6, block_id=10,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=96, alpha=alpha, stride=1,
+                                expansion=6, block_id=11,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=96, alpha=alpha, stride=1,
+                                expansion=6, block_id=12,
+                                momentum=momentum, epsilon=epsilon)
+
+        x = _inverted_res_block(x, filters=160, alpha=alpha, stride=2,
+                                expansion=6, block_id=13,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=160, alpha=alpha, stride=1,
+                                expansion=6, block_id=14,
+                                momentum=momentum, epsilon=epsilon)
+        x = _inverted_res_block(x, filters=160, alpha=alpha, stride=1,
+                                expansion=6, block_id=15,
+                                momentum=momentum, epsilon=epsilon)
+
+        x  = _inverted_res_block(x, filters=320, alpha=alpha, stride=1,
+                                expansion=6, block_id=16,
+                                momentum=momentum, epsilon=epsilon)
+        # no alpha applied to last conv as stated in the paper:
+        # if the width multiplier is greater than 1 we
+        # increase the number of output channels
+        if alpha > 1.0:
+            last_block_filters = _make_divisible(1280 * alpha, 8)
+        else:
+            last_block_filters = 1280
+        #TODO: Check for layers name (from checkpoints) to correct setup
+        with tf.name_scope('Conv_1'):
+            x = keras.layers.Conv2D(last_block_filters,
+                                    kernel_size=1,
+                                    use_bias=False)(x)
+            x = keras.layers.BatchNormalization(epsilon=epsilon,
+                                                momentum=momentum,
+                                                name='BatchNorm')(x)
+            x_final = keras.layers.ReLU(6., name='Relu6')(x)
+        if pooling == 'avg':
+            x_final = keras.layers.GlobalAveragePooling2D()(x_final)
+        else:
+            x_final = keras.layers.GlobalMaxPool2D()(x_final)
+        
     return x_final
