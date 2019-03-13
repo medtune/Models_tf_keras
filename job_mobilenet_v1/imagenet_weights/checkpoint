@@ -1,2 +1,0 @@
-model_checkpoint_path: "mobilenet_v1_0.5.ckpt"
-all_model_checkpoint_paths: "mobilenet_v1_0.5.ckpt"
