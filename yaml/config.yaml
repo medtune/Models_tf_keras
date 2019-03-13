@@ -1,5 +1,5 @@
 dataset:
-  dataset_dir: "G:/rvl-cdip-jpeg"
+  dataset_dir: "/home/equipe-ia/Desktop/rvl-cdip-jpeg"
   file_pattern: "labels/phase_name.txt"
   num_samples: 320000
   num_classes: 16
@@ -13,7 +13,7 @@ model:
 train:
   distribute: False
   xla : false
-  batch_size: 8
+  batch_size: 32
   learning_rate:
     initial : 0.001
     decay_factor : 0.95

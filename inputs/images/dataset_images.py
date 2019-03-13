@@ -134,10 +134,10 @@ def get_GED(phase_name, file_pattern, image_size, image_channels,
         raise ValueError('The phase_name %s is not recognized.\
                           Please input either train or eval as the phase_name' % (phase_name))
     #Using file_pattern, we replace the phase_name:
-    file_pattern.replace("phase_name", phase_name)
-    assert os.path.exists(file_pattern)
+    file_pattern_for_counting = file_pattern.replace("phase_name", phase_name)
+    assert os.path.exists(file_pattern_for_counting)
     #Use list file utiliy function, resulting in a tf.data.Dataset of filenames
-    dataset = tf.data.TextLineDataset([file_pattern])
+    dataset = tf.data.TextLineDataset([file_pattern_for_counting])
     # Check if training is true then shuffle:
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
