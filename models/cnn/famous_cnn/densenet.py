@@ -9,7 +9,7 @@ DenseNet models for Keras.
 -keras_applications:
     (https://github.com/keras-team/keras-applications/blob/master/keras_applications/densenet.py)
 """
-
+import tensorflow as tf
 import tensorflow.keras as keras
 
 def _transition_block(x, reduction, name, activation="relu",
@@ -27,19 +27,20 @@ def _transition_block(x, reduction, name, activation="relu",
         Output tensor of the block
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
+    with tf.name_scope(name):
     # Batch normalization layer 
-    x = keras.layers.BatchNormalization(axis=axis,
-                                        momentum=momentum,
-                                        epsilon=epsilon,
-                                        name = name+"_bn")(x)
-    # Activation layer
-    x = keras.layers.Activation(activation, name = name+"_"+activation)(x)
-    #number of filters, filter size = 1, stride = 1
-    x = keras.layers.Conv2D(int(keras.backend.int_shape(x)[axis] * reduction), 1,
-                            use_bias=False,
-                            name=name + '_conv')(x)
-    # Average pooling
-    x = keras.layers.AveragePooling2D(2, strides=2, name=name+"_pool")(x)
+        x = keras.layers.BatchNormalization(axis=axis,
+                                            momentum=momentum,
+                                            epsilon=epsilon,
+                                            name = "bn")(x)
+        # Activation layer
+        x = keras.layers.Activation(activation, name = activation)(x)
+        #number of filters, filter size = 1, stride = 1
+        x = keras.layers.Conv2D(int(keras.backend.int_shape(x)[axis] * reduction), 1,
+                                use_bias=False,
+                                name='conv')(x)
+        # Average pooling
+        x = keras.layers.AveragePooling2D(2, strides=2, name="pool")(x)
     return x
 
 def conv_block(x, growth_rate, name, activation="relu",
@@ -56,25 +57,26 @@ def conv_block(x, growth_rate, name, activation="relu",
     Return:
         Output tensor of the block
         """
-    axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    x_c = keras.layers.BatchNormalization(axis=axis,
-                                          momentum=momentum,
-                                          epsilon=epsilon,
-                                          name=name+"_bn")(x)
-    x_c = keras.layers.Activation(activation, name=name+"_"+activation)(x_c)
-    # number of filters=4*growth_rate, filter size = 1
-    x_c = keras.layers.Conv2D(4*growth_rate,1,
-                              use_bias=False,
-                              name=name+"_1_conv")(x_c)
-    x_c = keras.layers.BatchNormalization(axis=axis,
-                                          momentum=momentum,
-                                          epsilon=epsilon,
-                                          name=name+"_bn")(x_c)
-    x_c = keras.layers.Activation(activation, name=name+"_"+activation)(x_c)
-    # number of filters=growth_rate, filter size = 3
-    x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
-                              use_bias=False, name=name+"_2_conv")(x_c)
-    output = keras.layers.Concatenate(axis=axis, name=name+"_concat")([x, x_c])
+    with tf.name_scope(name):    
+        axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
+        x_c = keras.layers.BatchNormalization(axis=axis,
+                                            momentum=momentum,
+                                            epsilon=epsilon,
+                                            name="bn")(x)
+        x_c = keras.layers.Activation(activation, name=activation)(x_c)
+        # number of filters=4*growth_rate, filter size = 1
+        x_c = keras.layers.Conv2D(4*growth_rate,1,
+                                use_bias=False,
+                                name="conv_1")(x_c)
+        x_c = keras.layers.BatchNormalization(axis=axis,
+                                            momentum=momentum,
+                                            epsilon=epsilon,
+                                            name="bn")(x_c)
+        x_c = keras.layers.Activation(activation, name=activation)(x_c)
+        # number of filters=growth_rate, filter size = 3
+        x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
+                                use_bias=False, name="conv_2")(x_c)
+        output = keras.layers.Concatenate(axis=axis, name="concat")([x, x_c])
     return output
 
 def _dense_block(x, blocks, name):
@@ -86,8 +88,9 @@ def _dense_block(x, blocks, name):
     # Returns
         output tensor for the block.
     """
-    for i in range(blocks):
-        x = conv_block(x, 32, name=name + '_block' + str(i + 1))
+    with tf.name_scope(name):
+        for i in range(blocks):
+            x = conv_block(x, 32, name='block' + str(i + 1))
     return x
 
 
@@ -112,45 +115,46 @@ def densenet(blocks,
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     if blocks == [6, 12, 24, 16]:
-        naming = 'Densenet_121_'
+        naming = 'Densenet121'
     elif blocks == [6, 12, 32, 32]:
-        naming = 'Densenet_169_'
+        naming = 'Densenet169'
     elif blocks == [6, 12, 48, 32]:
-        naming = 'Densenet_201_'
+        naming = 'Densenet201'
     elif blocks == [6, 12, 64, 48]:
-        naming= 'Densenet_264_'
+        naming= 'Densenet264'
     else:
-        naming = 'Densenet_'
+        naming = 'Densenet'
     
-    x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)
-    x = keras.layers.Conv2D(64, 7, 
-                            strides=2, 
-                            use_bias=False, 
-                            name=naming+"conv1/conv")(x)
-    x = keras.layers.BatchNormalization(axis=axis,
-                                        momentum=momentum,
-                                        epsilon=epsilon,
-                                        name=naming+"conv1_bn")(x)
-    x = keras.layers.Activation(activation, name=naming+"conv1"+activation)(x)
-    x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
-    x = keras.layers.MaxPool2D(3, strides=2, name=naming+'pool1')(x)
-    x = _dense_block(x, blocks[0], naming+'conv2')
-    x = _transition_block(x, 0.5, naming+'pool2')
-    x = _dense_block(x, blocks[1], naming+'conv3')
-    x = _transition_block(x, 0.5, naming+'pool3')
-    x = _dense_block(x, blocks[2], naming+'conv4')
-    x = _transition_block(x, 0.5, naming+'pool4')
-    x = _dense_block(x, blocks[3], naming+'conv5')
-    x = keras.layers.BatchNormalization(axis=axis,
-                                        momentum=momentum,
-                                        epsilon=epsilon,
-                                        name=naming+'_bn')(x)
-    x = keras.layers.Activation(activation, name=naming+activation)(x)
-    if pooling == 'avg':
-        x = keras.layers.GlobalAveragePooling2D(name=naming+'avg_pool')(x)
-    elif pooling == 'max':
-        x = keras.layers.GlobalMaxPool2D(name=naming+'max_pool')(x)
-    return x
+    with tf.name_scope(naming):
+        x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)
+        x = keras.layers.Conv2D(64, 7, 
+                                strides=2, 
+                                use_bias=False, 
+                                name="conv1")(x)
+        x = keras.layers.BatchNormalization(axis=axis,
+                                            momentum=momentum,
+                                            epsilon=epsilon,
+                                            name="conv1_bn")(x)
+        x = keras.layers.Activation(activation, name="conv1_"+activation)(x)
+        x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
+        x = keras.layers.MaxPool2D(3, strides=2, name='pool1')(x)
+        x = _dense_block(x, blocks[0], 'conv2')
+        x = _transition_block(x, 0.5, 'pool2')
+        x = _dense_block(x, blocks[1], 'conv3')
+        x = _transition_block(x, 0.5, 'pool3')
+        x = _dense_block(x, blocks[2], 'conv4')
+        x = _transition_block(x, 0.5, 'pool4')
+        x = _dense_block(x, blocks[3], 'conv5')
+        x = keras.layers.BatchNormalization(axis=axis,
+                                            momentum=momentum,
+                                            epsilon=epsilon,
+                                            name='bn')(x)
+        x = keras.layers.Activation(activation, name=activation)(x)
+        if pooling == 'avg':
+            x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
+        elif pooling == 'max':
+            x = keras.layers.GlobalMaxPool2D(name='max_pool')(x)
+        return x
 
 def densenet_121(inputs,
             pooling='avg',

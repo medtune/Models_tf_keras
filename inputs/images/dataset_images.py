@@ -14,7 +14,7 @@ def get_tfrecord(phase_name, file_pattern, image_size, image_channels,
             }
         parsed_example = tf.parse_single_example(example, feature)
         label = parsed_example["image/class/id"]
-        label = tf.one_hot(label, num_classes)
+        label = tf.cast(tf.one_hot(label, num_classes), tf.float32)
         image = tf.image.decode_jpeg(parsed_example['image/encoded'], channels=image_channels)
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size)
@@ -80,7 +80,7 @@ def get_Mura(phase_name, file_pattern, image_size, image_channels,
         #NOTE:The Following line is a way of extracting label for MURA
         #(ex: \data\MURA-v1.1\train\XR_ELBOW\patient00011\study1_negative\image.png)
         label = tf.string_split([filename_split[-2]], delimiter = "_").values[-1]
-        label = tf.one_hot(table.lookup(label), num_classes)
+        label = tf.cast(tf.one_hot(table.lookup(label), num_classes), tf.float32)
         image = tf.image.decode_png(tf.read_file(filename), channels=image_channels)
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size)
@@ -118,7 +118,7 @@ def get_GED(phase_name, file_pattern, image_size, image_channels,
         #NOTE:The Following line is an efficient way of extracting label
         image = tf.image.convert_image_dtype(image, dtype=tf.float32)
         image = tf.image.resize_images(image, size=image_size)
-        label = tf.one_hot(label, num_classes)
+        label = tf.cast(tf.one_hot(label, num_classes), tf.float32)
         return (image, label)
     #On vérifie si phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'val', 'test']:

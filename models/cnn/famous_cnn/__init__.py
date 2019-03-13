@@ -21,7 +21,7 @@ architectures  = {
     "densenet_169": densenet.densenet_169,
     "densenet_201": densenet.densenet_201,
     "densenet_264": densenet.densenet_264,
-    "Mobilenet_v1": mobilenet.mobilenet_v1,
+    "mobilenet_v1": mobilenet.mobilenet_v1,
     "mobilenet_v2": mobilenetv2.mobilenet_v2,
     "vgg_16": vgg16.vgg_16,
     "vgg_19": vgg19.vgg_19

@@ -23,7 +23,7 @@ _native_optimizers = {
 _non_batchnorm_models = ["vgg_16", "vgg_19"]
 _batchnorm_models = ["densenet_121","densenet_169","densenet_201", "densenet_264"]
 
-def get_loss_function(classification_type):
+def _get_loss_function(classification_type):
         """
         Depending on the label type (sparse or one_hot) and the classification type,
         we return the loss function that we will pass into
@@ -34,7 +34,7 @@ def get_loss_function(classification_type):
             return tf.losses.sigmoid_cross_entropy
         return tf.losses.softmax_cross_entropy
 
-def get_aggregation_function(classification_type):
+def _get_aggregation_function(classification_type):
     """
     Depending on the label type (sparse or one_hot) and the classification type,
     we return the aggregation function of the logits
@@ -232,7 +232,7 @@ class AssembleComputerVisionModel():
                                                 export_outputs=export_outputs)
         else :
             # Define the classification loss : 
-            classification_loss = get_loss_function(self.classificationType)\
+            classification_loss = _get_loss_function(self.classificationType)\
                                                    (labels, logits)
             # Add the regularization loss : 
             # total_loss = tf.losses.get_total_loss()
@@ -268,7 +268,7 @@ class AssembleComputerVisionModel():
                 optimizer = _native_optimizers.get(self.optimizerNoun)(lr)
                 train_op = optimizer.minimize(classification_loss, global_step=global_step)
             trainHook = tf.train.SummarySaverHook(save_steps=100,
-                                    summary_op=self.getSummariesComputerVision())
+                                    summary_op=self.getSummariesComputerVision(features, labels))
             imageHook = tf.train.SummarySaverHook(save_steps=100,
                                                 summary_op=tf.summary.image("training_images", features))                                    
             return tf.estimator.EstimatorSpec(mode, 
@@ -343,7 +343,7 @@ class AssembleComputerVisionModel():
                 logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
         return logits
 
-    def getSummariesComputerVision(self):
+    def getSummariesComputerVision(self, features, labels):
         """
         We compute and return the serialized of trainable
         variables. In the case of computer vision, it is kernel
@@ -351,6 +351,8 @@ class AssembleComputerVisionModel():
         buffer resulting from merging all summaries present in the
         graph
         """
+        tf.summary.histogram("features_hist", features)
+        tf.summary.histogram("labels", labels)
         trainableVariables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         if trainableVariables:
             for variable in trainableVariables:
