@@ -4,7 +4,7 @@ import os
 from tensorflow.keras.layers import Dense, Flatten
 
 import utils.training.monitor as monitor
-from . import famous_cnn
+import famous_cnn
 
 """
 Mobilenet models have two additionnal arguments:
