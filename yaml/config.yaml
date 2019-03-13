@@ -5,7 +5,7 @@ dataset:
   num_classes: 16
   image_type: "gray"
 model:
-  name: "mobilenet_v2"
+  name: "mobilenet_v1"
   classification_layers: []
   classification_type: "multiclass"
   optimizer_noun: "adam"
