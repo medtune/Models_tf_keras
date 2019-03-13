@@ -63,6 +63,8 @@ def get_flat(phase_name, file_pattern, image_size,
     dataset = dataset.map(_parse_fn)
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
+        dataset = dataset.repeat(-1)
+    else:
         dataset = dataset.repeat(num_epochs)    
     dataset = dataset.batch(batch_size)
     return dataset
@@ -94,12 +96,15 @@ def get_Mura(phase_name, file_pattern, image_size, image_channels,
     file_pattern_for_counting = file_pattern.replace("phase_name", phase_name)
     #Use list file utiliy function, resulting in a tf.data.Dataset of filenames
     dataset = tf.data.Dataset.list_files(file_pattern_for_counting)
-    #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
-    dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
-        dataset = dataset.repeat(num_epochs)    
+        dataset = dataset.repeat(-1)
+    else:
+        dataset = dataset.repeat(num_epochs)
+    #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
+    dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
     dataset = dataset.batch(batch_size)
+    
     return dataset
 
 def get_GED(phase_name, file_pattern, image_size, image_channels,
@@ -113,28 +118,36 @@ def get_GED(phase_name, file_pattern, image_size, image_channels,
         #Create the keys_to_features dictionary for the decoder    
         split = tf.string_split([line], delimiter=" ").values
         filename, label = tf.strings.join([images_dir,split[0]], separator=os.sep), tf.strings.to_number(split[1], tf.int32)
+        # Read file according to filename
         image = tf.read_file(filename)
+        # Decode jpeg image
         image = tf.image.decode_jpeg(image, channels=image_channels)
-        #NOTE:The Following line is an efficient way of extracting label
-        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        # Resize image according to image_size (tuple)
         image = tf.image.resize_images(image, size=image_size)
+        # Convert image to float32
+        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+        # Transform labels to one_hot labels and cast their type to float32
         label = tf.cast(tf.one_hot(label, num_classes), tf.float32)
         return (image, label)
-    #On vérifie si phase_name est 'train' ou 'validation'
+    # Check if phase_name est 'train' ou 'validation'
     if phase_name not in ['train', 'val', 'test']:
         raise ValueError('The phase_name %s is not recognized.\
                           Please input either train or eval as the phase_name' % (phase_name))
     #Using file_pattern, we replace the phase_name:
-    file_pattern_for_counting = file_pattern.replace("phase_name", phase_name)
-    assert os.path.exists(file_pattern_for_counting)
+    file_pattern.replace("phase_name", phase_name)
+    assert os.path.exists(file_pattern)
     #Use list file utiliy function, resulting in a tf.data.Dataset of filenames
-    dataset = tf.data.TextLineDataset([file_pattern_for_counting])
-    #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
-    dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
+    dataset = tf.data.TextLineDataset([file_pattern])
+    # Check if training is true then shuffle:
     if is_training:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer_size)
-        dataset = dataset.repeat(num_epochs)    
+        dataset = dataset.repeat(-1)
+    else:
+        dataset = dataset.repeat(num_epochs)
+    #Introduce the parse_fn function in order to obtain the image and it's label for MURA dataset
+    dataset = dataset.map(_parse_fn, num_parallel_calls=os.cpu_count())
     dataset = dataset.batch(batch_size)
+
     return dataset
 
 
@@ -157,20 +170,7 @@ def get_input_fn(mode, datasetSpecs):
         # using dot separator
         file_type = file_pattern.split(os.sep)[-1].split(".")[-1]
         if file_type=="tfrecord":
-            def input_fn():
-                dataset = get_tfrecord(phase_name,
-                                        file_pattern=file_pattern,
-                                        image_size=datasetSpecs.get("image_size"),
-                                        image_channels=datasetSpecs.get("image_channels"),
-                                        num_classes=datasetSpecs.get("num_classes"),
-                                        batch_size=datasetSpecs.get("batch_size"),
-                                        num_epochs=datasetSpecs.get("num_epochs"),
-                                        shuffle_buffer_size=datasetSpecs.get("shuffle_buffer_size"),
-                                        is_training=train_mode)
-                return dataset
-        else:
-            def input_fn():
-                dataset = get_GED(phase_name,
+            dataset = get_tfrecord(phase_name,
                                     file_pattern=file_pattern,
                                     image_size=datasetSpecs.get("image_size"),
                                     image_channels=datasetSpecs.get("image_channels"),
@@ -179,5 +179,15 @@ def get_input_fn(mode, datasetSpecs):
                                     num_epochs=datasetSpecs.get("num_epochs"),
                                     shuffle_buffer_size=datasetSpecs.get("shuffle_buffer_size"),
                                     is_training=train_mode)
-                return dataset
-    return input_fn
+            return dataset
+        else:
+            dataset = get_GED(phase_name,
+                                file_pattern=file_pattern,
+                                image_size=datasetSpecs.get("image_size"),
+                                image_channels=datasetSpecs.get("image_channels"),
+                                num_classes=datasetSpecs.get("num_classes"),
+                                batch_size=datasetSpecs.get("batch_size"),
+                                num_epochs=datasetSpecs.get("num_epochs"),
+                                shuffle_buffer_size=datasetSpecs.get("shuffle_buffer_size"),
+                                is_training=train_mode)
+            return dataset

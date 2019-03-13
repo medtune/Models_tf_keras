@@ -3,7 +3,7 @@ dataset:
   file_pattern: "labels/phase_name.txt"
   num_samples: 320000
   num_classes: 16
-  image_type: "gray"
+  image_type: "rgb"
 model:
   name: "mobilenet_v1"
   classification_layers: []

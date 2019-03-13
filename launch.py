@@ -35,7 +35,6 @@ def main():
                                         eval_distribute=strategy,
                                         session_config=config)
 
-    
     estimator = tf.estimator.Estimator(model.model_fn,
                                        model_dir=jobDir,
                                        config=run_config,

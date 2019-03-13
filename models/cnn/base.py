@@ -73,7 +73,7 @@ def _get_epsilon():
     batch normalization denominator
     """
     epsilon = 0.01
-    while epsilon > 0.001:
+    while epsilon > 0.001 or epsilon is 0.:
             demand = "Please choose a value for epsilon that is below 0.001 (or 1e-3)"
             epsilon = float(get_input(demand))
     return epsilon
@@ -197,7 +197,9 @@ class AssembleComputerVisionModel():
             os.makedirs(evalDir)
         modelPath = tf.train.latest_checkpoint(jobPath)
         if modelPath:
-            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
+            # We retrieve naming according to the model name : 
+            variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[variablesPattern])
         else:
             # We call 'get_hyperParameters' method in order to define the model
             # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
@@ -209,9 +211,8 @@ class AssembleComputerVisionModel():
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
-            # We retrieve naming according to the model name : 
-            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[^/%s]'%(self.optimizerNoun)
             # We define warm_start settings for loading variables from checkpoint
+            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[^/%s]'%(self.optimizerNoun)
             warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
         return warmStartSetting
     
@@ -247,7 +248,6 @@ class AssembleComputerVisionModel():
             self.hyperParameters["activation"] = self.activationFunc
             
         self.hyperParameters["pooling"] = _get_pooling()
-        
 
     def  model_fn(self, features, labels, mode):
         """
@@ -324,8 +324,6 @@ class AssembleComputerVisionModel():
                                               loss=classification_loss, 
                                               train_op=train_op,
                                               training_hooks=[trainHook, imageHook])
-
-
 
     def classify(self, features):
         """
