@@ -104,7 +104,7 @@ def _get_pooling():
             interValue = get_input(demand)
             if interValue is None:
                 return interValue
-            pooling = str(in)
+            pooling = str(interValue)
     return pooling
 
 def _get_depthwise():
@@ -207,8 +207,7 @@ class AssembleComputerVisionModel():
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             # We call 'get_hyperParameters' method in order to define the model
             # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
-            
-            
+            modelPath = os.path.exists(os.path.join(downloadDir,"checkpoint"))
             if not modelPath:
                 self.get_hyperParameters()
                 print("Imagenet weights Download direction :" + downloadDir +"\n")
@@ -216,7 +215,7 @@ class AssembleComputerVisionModel():
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
             # We define warm_start settings for loading variables from checkpoint
-                variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[/+/^%s]'%(self.optimizerNoun)
+            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[/+/^%s]'%(self.optimizerNoun)
             warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
         return warmStartSetting
     
