@@ -1,6 +1,6 @@
 import tensorflow as tf
 import os
-import preprocessing
+from . import preprocessing
 
 def get_tfrecord(phase_name, file_pattern, image_size, image_channels,
                 num_classes, batch_size = 32, num_epochs = 1,

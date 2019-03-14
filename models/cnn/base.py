@@ -4,7 +4,7 @@ import os
 from tensorflow.keras.layers import Dense, Flatten
 
 import utils.training.monitor as monitor
-import famous_cnn
+from . import famous_cnn
 
 """
 Mobilenet models have two additionnal arguments:
@@ -98,10 +98,13 @@ def _get_pooling():
     batch normalization calculus'
     """
     pooling = ''
-    while pooling not in ['avg', 'max']:
-            demand = "Please choose a value for pooling argument that is `avg`\
-                      or `max`\n"
-            pooling = str(get_input(demand))
+    while pooling not in ['avg', 'max', None]:
+            demand = "Please choose a value for pooling argument that is `avg`, `None`\
+                      or `max`\n" 
+            interValue = get_input(demand)
+            if interValue is None:
+                return interValue
+            pooling = str(in)
     return pooling
 
 def _get_depthwise():
@@ -201,18 +204,19 @@ class AssembleComputerVisionModel():
             variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[variablesPattern])
         else:
+            downloadDir = os.path.join(jobPath,"imagenet_weights")
             # We call 'get_hyperParameters' method in order to define the model
             # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
-            self.get_hyperParameters()
-            downloadDir = os.path.join(jobPath,"imagenet_weights")
-            print("Imagenet weights Download direction :" + downloadDir +"\n")
-            modelPath = os.path.exists(os.path.join(downloadDir,self.checkpointName+'.ckpt*'))
+            
+            
             if not modelPath:
+                self.get_hyperParameters()
+                print("Imagenet weights Download direction :" + downloadDir +"\n")
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
             # We define warm_start settings for loading variables from checkpoint
-            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[^/%s]'%(self.optimizerNoun)
+                variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[/+/^%s]'%(self.optimizerNoun)
             warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
         return warmStartSetting
     
