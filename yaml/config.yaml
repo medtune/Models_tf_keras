@@ -1,5 +1,5 @@
 dataset:
-  dataset_dir: "/home/equipe-ia/Desktop/rvl-cdip-jpeg"
+  dataset_dir: "G:/rvl-cdip-jpeg"
   file_pattern: "labels/phase_name.txt"
   num_samples: 320000
   num_classes: 16

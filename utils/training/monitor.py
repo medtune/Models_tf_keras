@@ -72,3 +72,7 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
                 checkpoint.write(str(dictInfo))
     else:
         print("Imagenet weights are located in job_folder/imagenet_weights\n")
+
+
+def write_into_yaml_file(directory):
+    pass

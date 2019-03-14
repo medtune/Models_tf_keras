@@ -65,13 +65,14 @@ def _conv_block(inputs,
         x = keras.layers.Conv2D(filters, kernel,
                         padding='valid',
                         use_bias=False,
-                        strides=strides)(x)
+                        strides=strides,
+                        name= 'Conv2d')(x)
         #Batch Normalization of the output of the conv 2D
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
-                                            name='bn')(x)
-        x = keras.layers.ReLU(6., name='relu')(x)
+                                            name='BatchNorm')(x)
+        x = keras.layers.ReLU(6., name='ReLU')(x)
     return x
 
 def _depthwise_conv(inputs,

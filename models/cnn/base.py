@@ -102,7 +102,7 @@ def _get_pooling():
             demand = "Please choose a value for pooling argument that is `avg`, `None`\
                       or `max`\n" 
             interValue = get_input(demand)
-            if interValue is None:
+            if interValue == 'None':
                 return interValue
             pooling = str(interValue)
     return pooling
@@ -210,13 +210,16 @@ class AssembleComputerVisionModel():
             modelPath = os.path.exists(os.path.join(downloadDir,"checkpoint"))
             if not modelPath:
                 self.get_hyperParameters()
+                #TODO: Add instructions for writing Hyperparameters data in YAML file:
+
                 print("Imagenet weights Download direction :" + downloadDir +"\n")
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
             # We define warm_start settings for loading variables from checkpoint
-            variablesPattern = famous_cnn.naming_mapping.get(self.modelName) + '[/+/^%s]'%(self.optimizerNoun)
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern])
+            mappedModelName = famous_cnn.naming_mapping.get(self.modelName)
+            variablesPattern = mappedModelName + '[/+/^%s]'%(self.optimizerNoun)
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern, mappedModelName+'/+^Logits'])
         return warmStartSetting
     
     def get_modelName(self):
@@ -249,9 +252,8 @@ class AssembleComputerVisionModel():
                 self.hyperParameters["momentum"] = _get_momentum()
                 self.hyperParameters["epsilon"] = _get_epsilon()
             self.hyperParameters["activation"] = self.activationFunc
-            
         self.hyperParameters["pooling"] = _get_pooling()
-
+        
     def  model_fn(self, features, labels, mode):
         """
         Model_fn function that we will pass to the 
