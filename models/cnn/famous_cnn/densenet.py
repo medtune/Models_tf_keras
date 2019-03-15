@@ -115,15 +115,15 @@ def densenet(blocks,
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
     if blocks == [6, 12, 24, 16]:
-        naming = 'Densenet121'
+        naming = 'densenet121'
     elif blocks == [6, 12, 32, 32]:
-        naming = 'Densenet169'
+        naming = 'densenet169'
     elif blocks == [6, 12, 48, 32]:
-        naming = 'Densenet201'
+        naming = 'densenet201'
     elif blocks == [6, 12, 64, 48]:
-        naming= 'Densenet264'
+        naming= 'densenet264'
     else:
-        naming = 'Densenet'
+        naming = 'densenet'
     
     with tf.name_scope(naming):
         x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)

@@ -61,12 +61,11 @@ def _conv_block(inputs,
     # tuple of 2 tuples of 2 ints: interpreted as ((top_pad, bottom_pad), (left_pad, right_pad))
     x = keras.layers.ZeroPadding2D(padding=((0, 1), (0, 1)),
                                 name='conv1_pad')(inputs)
-    with tf.name_scope('conv1'):
+    with tf.name_scope('Conv2d_0'):
         x = keras.layers.Conv2D(filters, kernel,
                         padding='valid',
                         use_bias=False,
-                        strides=strides,
-                        name= 'Conv2d')(x)
+                        strides=strides)(x)
         #Batch Normalization of the output of the conv 2D
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,

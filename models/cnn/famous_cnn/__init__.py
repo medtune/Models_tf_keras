@@ -18,10 +18,10 @@ default_names = ["densenet_121", "densenet_169", "densenet_201",
 
 # Dict to retrieve naming that we pass to warm-start settings
 naming_mapping = {
-    "densenet_121": "Densenet121",
-    "densenet_169": "Densenet169",
-    "densenet_201": "Densenet201",
-    "densenet_264": "Densenet264",
+    "densenet_121": "densenet121",
+    "densenet_169": "densenet169",
+    "densenet_201": "densenet201",
+    "densenet_264": "densenet264",
     "mobilenet_v1": "MobilenetV1",
     "mobilenet_v2": "MobilenetV2",
     "vgg_16": "vgg_16",

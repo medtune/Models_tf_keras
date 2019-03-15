@@ -211,7 +211,7 @@ class AssembleComputerVisionModel():
             if not modelPath:
                 self.get_hyperParameters()
                 #TODO: Add instructions for writing Hyperparameters data in YAML file:
-
+                
                 print("Imagenet weights Download direction :" + downloadDir +"\n")
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
@@ -341,16 +341,18 @@ class AssembleComputerVisionModel():
         # of the neural networks:
         if hasattr(tf.nn, self.activationFunc):
             #define the activation function 
-            activation = getattr(tf.nn, self.activationFunc) 
-        with tf.name_scope("Logits"):
-            inter = Flatten()(features)
-            if self.classificationLayers:
-                for size in self.classificationLayers:
-                    inter = Dense(size, activation=activation)(inter)
-            if self.classificationType=="multilabel":
-                logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
-            else:
-                logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
+            activation = getattr(tf.nn, self.activationFunc)
+        modelNaming = famous_cnn.naming_mapping.get(self.modelName)
+        with tf.name_scope(modelNaming):
+            with tf.name_scope("Logits"):
+                inter = Flatten()(features)
+                if self.classificationLayers:
+                    for size in self.classificationLayers:
+                        inter = Dense(size, activation=activation)(inter)
+                if self.classificationType=="multilabel":
+                    logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
+                else:
+                    logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
         return logits
 
     def getSummariesComputerVision(self, features, labels):
