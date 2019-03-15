@@ -50,37 +50,34 @@ def _inverted_res_block(inputs,
                         alpha,
                         filters,
                         block_id,
-                        momentum=0.999,
-                        epsilon=1e-3):
+                        momentum,
+                        epsilon):
     
     in_channels = keras.backend.int_shape(inputs)[-1]
     pointwise_conv_filters = int(filters * alpha)
     pointwise_filters = _make_divisible(pointwise_conv_filters, 8)
     x = inputs
-    
     if block_id:
         prefix = 'expanded_conv_{}'.format(block_id)
+        with tf.variable_scope(prefix):
+            with tf.variable_scope('expand'):
+                x = keras.layers.Conv2D(expansion * in_channels,
+                                        kernel_size=1,
+                                        padding='same',
+                                        use_bias=False,
+                                        activation=None,
+                                        name='Conv2D')(x)
+                x = keras.layers.BatchNormalization(epsilon=epsilon,
+                                                    momentum=momentum,
+                                                    name='BatchNorm')(x)
+                x = keras.layers.ReLU(6., name='Relu6')(x)
     else:
         prefix = 'expanded_conv'
-
-    with tf.name_scope(prefix):
-        with tf.name_scope('expand'):
-            x = keras.layers.Conv2D(expansion * in_channels,
-                                    kernel_size=1,
-                                    padding='same',
-                                    use_bias=False,
-                                    activation=None,
-                                    name='Conv2D')(x)
-            x = keras.layers.BatchNormalization(epsilon=epsilon,
-                                                momentum=momentum,
-                                                name='BatchNorm')(x)
-            x = keras.layers.ReLU(6., name='Relu6')(x)
-
-
+    with tf.variable_scope(prefix):
         if stride == 2:
             x = keras.layers.ZeroPadding2D(padding=correct_pad(x, 3),
                                     name='pad')(x)
-        with tf.name_scope('depthwise'):
+        with tf.variable_scope('depthwise'):
             x = keras.layers.DepthwiseConv2D(kernel_size=3,
                                             strides=stride,
                                             activation=None,
@@ -92,7 +89,7 @@ def _inverted_res_block(inputs,
                                                 name='BatchNorm')(x)
 
             x = keras.layers.ReLU(6., name='Relu6')(x)
-        with tf.name_scope('project'):
+        with tf.variable_scope('project'):
             x = keras.layers.Conv2D(pointwise_filters,
                                     kernel_size=1,
                                     padding='same',
@@ -107,10 +104,10 @@ def _inverted_res_block(inputs,
 
 def mobilenet_v2(inputs,
                 alpha,
-                depthwise_multiplier=1,
-                pooling=None,
-                momentum=0.99,
-                epsilon=0.001):
+                pooling,
+                momentum,
+                epsilon,
+                depthwise_multiplier=1):
 
     """
     Args:
@@ -136,9 +133,9 @@ def mobilenet_v2(inputs,
         keras.backend.set_image_data_format('channels_last')
     first_block_filter = _make_divisible(32*alpha, 8)
     
-    with tf.name_scope(naming):
+    with tf.variable_scope(naming):
 
-        with tf.name_scope('Conv'):
+        with tf.variable_scope('Conv'):
             x = keras.layers.ZeroPadding2D(padding=correct_pad(inputs, kernel_size=3),
                                         name='pad')(inputs)
             x = keras.layers.Conv2D(first_block_filter,
@@ -216,7 +213,7 @@ def mobilenet_v2(inputs,
         else:
             last_block_filters = 1280
         #TODO: Check for layers name (from checkpoints) to correct setup
-        with tf.name_scope('Conv_1'):
+        with tf.variable_scope('Conv_1'):
             x = keras.layers.Conv2D(last_block_filters,
                                     kernel_size=1,
                                     use_bias=False)(x)
@@ -230,3 +227,25 @@ def mobilenet_v2(inputs,
             x_final = keras.layers.GlobalMaxPool2D()(x_final)
         
     return x_final
+
+def slim_to_keras_namescope():
+    """
+    Utility function that produces a mapping btw
+    old names scopes of MobilenetV1 variables
+    """
+    
+    nameMapping = {}
+    nameMapping['MobilenetV2/Conv/Conv2D/kernel'] = 'MobilenetV2/Conv/weights'
+    nameMapping['MobilenetV2/expanded_conv/depthwise/Conv2D/kernel'] = 'MobilenetV2/expanded_conv/depthwise/weights'
+    nameMapping['MobilenetV2/expanded_conv/project/Conv2D/kernel'] = 'MobilenetV2/expanded_conv/project/weights'
+    for i in range(1,16):
+        newNameExpand = 'MobilenetV2/expanded_conv_%d/expand/Conv2D/kernel' %i
+        oldNameExpand = 'MobilenetV2/expanded_conv_%d/expand/weights' %i
+        newNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/Conv2D/kernel' %i
+        oldNameDepthwise = 'MobilenetV2/expanded_conv_%d/weights' %i
+        newNameProject = 'MobilenetV2/expanded_conv_%d/project/Conv2D/kernel' %i
+        oldNameProject = 'MobilenetV2/expanded_conv_%d/weights' %i
+        nameMapping[newNameExpand] = oldNameExpand
+        nameMapping[newNameDepthwise] = oldNameDepthwise
+        nameMapping[newNameProject] = oldNameProject
+    return nameMapping

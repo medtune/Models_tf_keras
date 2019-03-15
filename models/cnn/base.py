@@ -218,8 +218,10 @@ class AssembleComputerVisionModel():
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
             # We define warm_start settings for loading variables from checkpoint
             mappedModelName = famous_cnn.naming_mapping.get(self.modelName)
+            varNametoPreviousName = famous_cnn.var_name_to_prev_var_name.get(self.modelName)
             variablesPattern = mappedModelName + '[/+/^%s]'%(self.optimizerNoun)
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern, mappedModelName+'/+^Logits'])
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern, mappedModelName+'/+^Logits'],
+                                                              var_name_to_prev_var_name=varNametoPreviousName)
         return warmStartSetting
     
     def get_modelName(self):
@@ -368,6 +370,6 @@ class AssembleComputerVisionModel():
         trainableVariables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         if trainableVariables:
             for variable in trainableVariables:
-                tf.summary.histogram(variable.name, variable)
+                tf.summary.histogram(variable.name+':0', variable)
         merge_summaries = tf.summary.merge_all()
         return merge_summaries

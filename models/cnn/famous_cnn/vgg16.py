@@ -25,9 +25,9 @@ def vgg_16(inputs,
         - Tensor representing features 
     """
     naming = 'vgg_16'
-    with tf.name_scope(naming):
+    with tf.variable_scope(naming):
         #Block 1:
-        with tf.name_scope('conv1'):
+        with tf.variable_scope('conv1'):
             x = keras.layers.Conv2D(64, (3,3),
                                     activation=activation,
                                     padding = 'same',
@@ -41,7 +41,7 @@ def vgg_16(inputs,
                                     name='pool1')(x)
 
         #Block 2:
-        with tf.name_scope('conv2'):
+        with tf.variable_scope('conv2'):
             x = keras.layers.Conv2D(128, (3,3),
                                     activation=activation,
                                     padding = 'same',
@@ -55,7 +55,7 @@ def vgg_16(inputs,
                                     name='pool2')(x)
 
         #Block 3:
-        with tf.name_scope('conv3'):
+        with tf.variable_scope('conv3'):
             x = keras.layers.Conv2D(256, (3,3),
                                     activation=activation,
                                     padding = 'same',
@@ -73,7 +73,7 @@ def vgg_16(inputs,
                                     name='pool3')(x)
 
         #Block 4:
-        with tf.name_scope('conv4'):
+        with tf.variable_scope('conv4'):
             x = keras.layers.Conv2D(512, (3,3),
                                     activation=activation,
                                     padding = 'same',
@@ -91,7 +91,7 @@ def vgg_16(inputs,
                                     name='pool4')(x)
 
         #Block 5:
-        with tf.name_scope('conv5'):
+        with tf.variable_scope('conv5'):
             x = keras.layers.Conv2D(512, (3,3),
                                     activation=activation,
                                     padding = 'same',

@@ -12,8 +12,8 @@ DenseNet models for Keras.
 import tensorflow as tf
 import tensorflow.keras as keras
 
-def _transition_block(x, reduction, name, activation="relu",
-                    momentum=0.99, epsilon=0.001):
+def _transition_block(x, reduction, name, activation,
+                    momentum, epsilon):
     """
     Transition block defined in Densenet architecture
 
@@ -27,24 +27,25 @@ def _transition_block(x, reduction, name, activation="relu",
         Output tensor of the block
     """
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    with tf.name_scope(name):
-    # Batch normalization layer 
-        x = keras.layers.BatchNormalization(axis=axis,
-                                            momentum=momentum,
-                                            epsilon=epsilon,
-                                            name = "bn")(x)
-        # Activation layer
-        x = keras.layers.Activation(activation, name = activation)(x)
-        #number of filters, filter size = 1, stride = 1
-        x = keras.layers.Conv2D(int(keras.backend.int_shape(x)[axis] * reduction), 1,
-                                use_bias=False,
-                                name='conv')(x)
-        # Average pooling
-        x = keras.layers.AveragePooling2D(2, strides=2, name="pool")(x)
+    with tf.variable_scope(name):
+        with tf.variable_scope('blk'):
+            # Batch normalization layer 
+            x = keras.layers.BatchNormalization(axis=axis,
+                                                momentum=momentum,
+                                                epsilon=epsilon,
+                                                name = "BatchNorm")(x)
+            # Activation layer
+            x = keras.layers.Activation(activation, name = activation)(x)
+            #number of filters, filter size = 1, stride = 1
+            x = keras.layers.Conv2D(int(keras.backend.int_shape(x)[axis] * reduction), 1,
+                                    use_bias=False,
+                                    name='Conv')(x)
+            # Average pooling
+            x = keras.layers.AveragePooling2D(2, strides=2, name="pool")(x)
     return x
 
-def conv_block(x, growth_rate, name, activation="relu",
-                momentum=0.99, epsilon=0.001):
+def conv_block(x, growth_rate, name, activation,
+                momentum, epsilon):
     """Convolutional block defined in Densenet architecture,
        It is its base layers
 
@@ -57,29 +58,31 @@ def conv_block(x, growth_rate, name, activation="relu",
     Return:
         Output tensor of the block
         """
-    with tf.name_scope(name):    
+    with tf.variable_scope(name):    
         axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-        x_c = keras.layers.BatchNormalization(axis=axis,
-                                            momentum=momentum,
-                                            epsilon=epsilon,
-                                            name="bn")(x)
-        x_c = keras.layers.Activation(activation, name=activation)(x_c)
-        # number of filters=4*growth_rate, filter size = 1
-        x_c = keras.layers.Conv2D(4*growth_rate,1,
-                                use_bias=False,
-                                name="conv_1")(x_c)
-        x_c = keras.layers.BatchNormalization(axis=axis,
-                                            momentum=momentum,
-                                            epsilon=epsilon,
-                                            name="bn")(x_c)
-        x_c = keras.layers.Activation(activation, name=activation)(x_c)
-        # number of filters=growth_rate, filter size = 3
-        x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
-                                use_bias=False, name="conv_2")(x_c)
+        with tf.variable_scope('x1'):
+            x_c = keras.layers.BatchNormalization(axis=axis,
+                                                momentum=momentum,
+                                                epsilon=epsilon,
+                                                name='BatchNorm')(x)
+            x_c = keras.layers.Activation(activation, name=activation)(x_c)
+            # number of filters=4*growth_rate, filter size = 1
+            x_c = keras.layers.Conv2D(4*growth_rate,1,
+                                    use_bias=False,
+                                    name="Conv")(x_c)
+        with tf.variable_scope('x2'):
+            x_c = keras.layers.BatchNormalization(axis=axis,
+                                                momentum=momentum,
+                                                epsilon=epsilon,
+                                                name='BatchNorm')(x_c)
+            x_c = keras.layers.Activation(activation, name=activation)(x_c)
+            # number of filters=growth_rate, filter size = 3
+            x_c = keras.layers.Conv2D(growth_rate, 3, padding="same",
+                                    use_bias=False, name="Conv")(x_c)
         output = keras.layers.Concatenate(axis=axis, name="concat")([x, x_c])
     return output
 
-def _dense_block(x, blocks, name):
+def _dense_block(x, blocks, name, activation, momentum, epsilon):
     """A dense block.
     # Arguments
         x: input tensor.
@@ -88,18 +91,22 @@ def _dense_block(x, blocks, name):
     # Returns
         output tensor for the block.
     """
-    with tf.name_scope(name):
+    with tf.variable_scope(name):
         for i in range(blocks):
-            x = conv_block(x, 32, name='block' + str(i + 1))
+            x = conv_block(x, 
+                           32,
+                           'conv_block' + str(i + 1), 
+                           activation,
+                           momentum, epsilon)
     return x
 
 
 def densenet(blocks,
             inputs,
             pooling,
-            activation="relu",
-            momentum=0.99,
-            epsilon=0.001):
+            activation,
+            momentum,
+            epsilon):
     """
     Args:
         blocks: list of integer, each element represents
@@ -125,31 +132,32 @@ def densenet(blocks,
     else:
         naming = 'densenet'
     
-    with tf.name_scope(naming):
+    with tf.variable_scope(naming):
         x = keras.layers.ZeroPadding2D(((3,3), (3,3)))(inputs)
         x = keras.layers.Conv2D(64, 7, 
                                 strides=2, 
-                                use_bias=False, 
+                                use_bias=True, 
                                 name="conv1")(x)
         x = keras.layers.BatchNormalization(axis=axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
-                                            name="conv1_bn")(x)
+                                            name="BatchNorm")(x)
         x = keras.layers.Activation(activation, name="conv1_"+activation)(x)
         x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
         x = keras.layers.MaxPool2D(3, strides=2, name='pool1')(x)
-        x = _dense_block(x, blocks[0], 'conv2')
-        x = _transition_block(x, 0.5, 'pool2')
-        x = _dense_block(x, blocks[1], 'conv3')
-        x = _transition_block(x, 0.5, 'pool3')
-        x = _dense_block(x, blocks[2], 'conv4')
-        x = _transition_block(x, 0.5, 'pool4')
-        x = _dense_block(x, blocks[3], 'conv5')
-        x = keras.layers.BatchNormalization(axis=axis,
-                                            momentum=momentum,
-                                            epsilon=epsilon,
-                                            name='bn')(x)
-        x = keras.layers.Activation(activation, name=activation)(x)
+        x = _dense_block(x, blocks[0], 'dense_block1',activation, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block1', activation, momentum, epsilon)
+        x = _dense_block(x, blocks[1], 'dense_block2',activation, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block2',activation, momentum, epsilon)
+        x = _dense_block(x, blocks[2], 'dense_block3',activation, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block1',activation, momentum, epsilon)
+        x = _dense_block(x, blocks[3], 'dense_block4',activation, momentum, epsilon)
+        with tf.variable_scope('final_block'):
+            x = keras.layers.BatchNormalization(axis=axis,
+                                                momentum=momentum,
+                                                epsilon=epsilon,
+                                                name='BatchNorm')(x)
+            x = keras.layers.Activation(activation, name=activation)(x)
         if pooling == 'avg':
             x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
         elif pooling == 'max':
@@ -157,10 +165,10 @@ def densenet(blocks,
         return x
 
 def densenet_121(inputs,
-            pooling='avg',
-            activation="relu",
-            momentum=0.99,
-            epsilon=0.001):
+            pooling,
+            activation,
+            momentum,
+            epsilon):
     return densenet([6,12,24,16],
                     inputs,
                     pooling=pooling,
@@ -169,10 +177,10 @@ def densenet_121(inputs,
                     epsilon=epsilon)
 
 def densenet_169(inputs,
-            pooling='avg',
-            activation="relu",
-            momentum=0.99,
-            epsilon=0.001):
+            pooling,
+            activation,
+            momentum,
+            epsilon):
     return densenet([6, 12, 32, 32],
                     inputs,
                     pooling=pooling,
@@ -181,10 +189,10 @@ def densenet_169(inputs,
                     epsilon=epsilon)
 
 def densenet_201(inputs,
-                pooling='avg',
-                activation="relu",
-                momentum=0.99,
-                epsilon=0.001):
+                pooling,
+                activation,
+                momentum,
+                epsilon):
     return densenet([6, 12, 48, 32],
                     inputs,
                     pooling=pooling,
@@ -193,10 +201,10 @@ def densenet_201(inputs,
                     epsilon=epsilon)
 
 def densenet_264(inputs,
-                pooling='avg',
-                activation="relu",
-                momentum=0.99,
-                epsilon=0.001):
+                pooling,
+                activation,
+                momentum,
+                epsilon):
     return densenet([6, 12, 64, 48],
                     inputs,
                     pooling=pooling,

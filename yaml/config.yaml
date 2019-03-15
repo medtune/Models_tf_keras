@@ -3,9 +3,9 @@ dataset:
   file_pattern: "labels/phase_name.txt"
   num_samples: 320000
   num_classes: 16
-  image_type: "gray"
+  image_type: "rgb"
 model:
-  name: "densenet_121"
+  name: "mobilenet_v2"
   classification_layers: []
   classification_type: "multiclass"
   optimizer_noun: "adam"
@@ -13,7 +13,7 @@ model:
 train:
   distribute: False
   xla : false
-  batch_size: 32
+  batch_size: 8
   learning_rate:
     initial : 0.001
     decay_factor : 0.95

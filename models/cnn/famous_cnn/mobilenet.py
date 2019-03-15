@@ -60,12 +60,12 @@ def _conv_block(inputs,
     filters = int(filters * alpha)
     # tuple of 2 tuples of 2 ints: interpreted as ((top_pad, bottom_pad), (left_pad, right_pad))
     x = keras.layers.ZeroPadding2D(padding=((0, 1), (0, 1)),
-                                name='conv1_pad')(inputs)
-    with tf.name_scope('Conv2d_0'):
+                                   name='conv1_pad')(inputs)
+    with tf.variable_scope('Conv2d_0', 'Conv2d_0'):
         x = keras.layers.Conv2D(filters, kernel,
-                        padding='valid',
-                        use_bias=False,
-                        strides=strides)(x)
+                                padding='valid',
+                                use_bias = False,
+                                strides=strides)(x)
         #Batch Normalization of the output of the conv 2D
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
@@ -105,25 +105,23 @@ def _depthwise_conv(inputs,
         x = keras.layers.ZeroPadding2D(((0, 1), (0, 1)),
                                  name='Conv2d_%d_pad' % block_id)(inputs)
 
-    with tf.name_scope('Conv2d_%d_depthwise' % block_id):
+    with tf.variable_scope('Conv2d_%d_depthwise' % block_id):
         x = keras.layers.DepthwiseConv2D((3, 3),
-                                padding='same' if strides == (1, 1) else 'valid',
-                                depth_multiplier=depthwise_multiplier,
-                                strides=strides,
-                                use_bias=False,
-                                name='depthwise')(x)
+                                        padding='same' if strides == (1, 1) else 'valid',
+                                        depth_multiplier=depthwise_multiplier,
+                                        strides=strides,
+                                        use_bias = False)(x)
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
                                             name='BatchNorm')(x)
         x = keras.layers.ReLU(6., name='Relu6')(x)
 
-    with tf.name_scope('Conv2d_%d_pointwise' % block_id):
+    with tf.variable_scope('Conv2d_%d_pointwise' % block_id):
         x = keras.layers.Conv2D(pointwise_conv_filters, (1, 1),
-                        padding='same',
-                        use_bias=False,
-                        strides=(1, 1),
-                        name='Conv2D')(x)
+                                padding='same',
+                                use_bias = False,
+                                strides=(1, 1))(x)
         x = keras.layers.BatchNormalization(axis=channel_axis,
                                             momentum=momentum,
                                             epsilon=epsilon,
@@ -133,10 +131,10 @@ def _depthwise_conv(inputs,
 
 def mobilenet_v1(inputs,
                  alpha,
-                 depthwise_multiplier=1,
-                 pooling=None,
-                 momentum=0.99,
-                 epsilon=0.001):
+                 pooling,
+                 momentum,
+                 epsilon,
+                 depthwise_multiplier=1):
     """
     Args:
         alpha: alpha: controls the width of the network.
@@ -162,7 +160,7 @@ def mobilenet_v1(inputs,
                         '`0.25`, `0.50` or `1.0` only.')
     if axis ==  'channels_first':
         keras.backend.set_image_data_format('channels_last')
-    with tf.name_scope(naming):
+    with tf.variable_scope(naming, 'MobilenetV1'):
         x = _conv_block(inputs, 32, alpha, kernel=(3,3), strides=(2,2),
                         momentum=momentum, epsilon=epsilon)
 
@@ -222,3 +220,19 @@ def mobilenet_v1(inputs,
         elif pooling == 'max':
             x = keras.layers.GlobalMaxPool2D(name='max_pool')(x)
     return x
+
+def slim_to_keras_namescope():
+    """
+    Utility function that produces a mapping btw
+    old names scopes of MobilenetV1 variables
+    """
+    nameMapping = {}
+    nameMapping['MobilenetV1/Conv2d_0/conv2d/kernel'] = 'MobilenetV1/Conv2d_0/weights'
+    for i in range(1,14):
+        newNameDepthwise = 'MobilenetV1/Conv2d_%d_depthwise/depthwise_conv2d/depthwise_kernel' %i
+        oldNameDepthwise = 'MobilenetV1/Conv2d_%d_depthwise/depthwise_weights' %i
+        newNamePointwise = 'MobilenetV1/Conv2d_%d_pointwise/conv2d/kernel' %i
+        oldNamePointwise = 'MobilenetV1/Conv2d_%d_pointwise/weights' %i
+        nameMapping[newNameDepthwise] = oldNameDepthwise
+        nameMapping[newNamePointwise] = oldNamePointwise
+    return nameMapping
