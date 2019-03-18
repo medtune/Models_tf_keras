@@ -150,7 +150,7 @@ def densenet(blocks,
         x = _dense_block(x, blocks[1], 'dense_block2',activation, momentum, epsilon)
         x = _transition_block(x, 0.5, 'transition_block2',activation, momentum, epsilon)
         x = _dense_block(x, blocks[2], 'dense_block3',activation, momentum, epsilon)
-        x = _transition_block(x, 0.5, 'transition_block1',activation, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block3',activation, momentum, epsilon)
         x = _dense_block(x, blocks[3], 'dense_block4',activation, momentum, epsilon)
         with tf.variable_scope('final_block'):
             x = keras.layers.BatchNormalization(axis=axis,
@@ -216,3 +216,31 @@ setattr(densenet_121, '__doc__', densenet.__doc__)
 setattr(densenet_169, '__doc__', densenet.__doc__)
 setattr(densenet_201, '__doc__', densenet.__doc__)
 setattr(densenet_264, '__doc__', densenet.__doc__)
+
+
+def slim_to_keras_namescope(blocks):
+    nameMapping = {}
+    if blocks == [6, 12, 24, 16]:
+        naming = 'densenet121'
+    elif blocks == [6, 12, 32, 32]:
+        naming = 'densenet169'
+    elif blocks == [6, 12, 48, 32]:
+        naming = 'densenet201'
+    elif blocks == [6, 12, 64, 48]:
+        naming= 'densenet264'
+    else:
+        naming = 'densenet'
+    nameMapping['%s/conv1/Conv2D/kernel'%naming] = '%s/conv1/weights'%naming
+    for i, value in enumerate(blocks):
+        for j in range(1, value):
+            newNameXone= '%s/dense_block%d/conv_block%d/x1/Conv2D/kernel' %(naming, i+1, j)
+            oldNameXone = '%s/dense_block_%d/conv_block%d/x1/Conv/weights' %(naming, i+1, j)
+            newNameXtwo = '%s/dense_block%d/conv_block%d/x2/Conv2D/kernel' %(naming, i+1, j)
+            oldNameXtwo = '%s/dense_block%d/conv_block%d/x2/Conv/weights' %(naming, i+1, j)
+            nameMapping[newNameXone] = oldNameXone
+            nameMapping[newNameXtwo] = oldNameXtwo
+        if i <= 2:
+            newNameTransition = '%s/transition_block%d/blk/Conv2D/kernel' %(naming, i)
+            oldNameTrasnition = '%s/transition_block%d/blk/Conv/weights' %(naming, i)
+            nameMapping[newNameTransition] = oldNameTrasnition
+    return nameMapping

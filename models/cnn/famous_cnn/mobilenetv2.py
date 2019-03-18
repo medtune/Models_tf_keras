@@ -233,7 +233,6 @@ def slim_to_keras_namescope():
     Utility function that produces a mapping btw
     old names scopes of MobilenetV1 variables
     """
-    
     nameMapping = {}
     nameMapping['MobilenetV2/Conv/Conv2D/kernel'] = 'MobilenetV2/Conv/weights'
     nameMapping['MobilenetV2/expanded_conv/depthwise/Conv2D/kernel'] = 'MobilenetV2/expanded_conv/depthwise/weights'
