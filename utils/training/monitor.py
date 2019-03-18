@@ -74,5 +74,26 @@ def download_imagenet_checkpoints(checkpointName, url, downloadDir):
         print("Imagenet weights are located in job_folder/imagenet_weights\n")
 
 
-def write_into_yaml_file(directory):
-    pass
+def write_into_yaml_file(directory, yamlFileName, hyperparametersDict):
+    """
+    Given a directory, the modelName that is used, and HP dict,
+    we write the selected hyperparameters during the execution 
+    of the program. This utility function is used if the program stopped
+    (broke) after the selection of HP
+    """
+    from yaml import dump
+    with open(yamlFileName, 'w') as f:
+        dump(hyperparametersDict, f)
+    return
+
+def load_yaml_file(yamlFileName):
+    """
+    Given a directory, the modelName that is used, and HP dict,
+    we write the selected hyperparameters during the execution 
+    of the program. This utility function is used if the program stopped
+    (broke) after the selection of HP
+    """
+    from yaml import load
+    with open(yamlFileName) as stream:
+        data = load(stream)
+    return data

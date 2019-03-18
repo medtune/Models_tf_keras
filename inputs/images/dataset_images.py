@@ -156,7 +156,8 @@ def _augment(image, is_training=False):
     Helper function for Data augmentation, depending on
     the case: train or validation set of data
     """
-    return image
+    imageT = tf.image.per_image_standardization(image)
+    return imageT
 
 
 def get_input_fn(mode, datasetSpecs):

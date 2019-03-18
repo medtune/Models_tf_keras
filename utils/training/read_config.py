@@ -25,6 +25,8 @@ channels = {
     "rgba": 4
 }
 
+optimizer_noun = ['Adam']
+
 def get_default_shape(name):
     """
     Based on the model's name, the function returns
@@ -55,7 +57,6 @@ def decode(yamlFilename):
     model_spec = getModelFnSpec(dataset_spec, train_spec, model_spec)
     dataset_spec = getInputFnSpec(dataset_spec, train_spec, model_spec["name"])
     device_spec = train_spec
-
     return dataset_spec, model_spec, device_spec
 
 def getModelFnSpec(dataSpec, trainSpec, modelSpec):
@@ -73,7 +74,8 @@ def getModelFnSpec(dataSpec, trainSpec, modelSpec):
     """
     tagsList = ["name", "image_type", "num_classes", "learning_rate",
                 "activation_func", "num_samples", "batch_size", 
-                "classification_layers", "classification_type"]
+                "classification_layers", "classification_type",
+                "optimizer_noun"]
     
     dataSpecKeys = dataSpec.keys()
     trainSpecKeys = trainSpec.keys()
@@ -103,8 +105,9 @@ def getInputFnSpec(dataSpec, trainSpec, modelName):
     Returns:
         - dict representing the model specifications as need by AssembleModel
     """
-    tagsList = ["dataset_dir","file_pattern","image_type", "num_classes", "batch_size",
-                "num_epochs", "num_samples", "shuffle_buffer_size"]
+    tagsList = ["dataset_dir","file_pattern","image_type", "num_classes", 
+                "batch_size","num_epochs", "num_samples", 
+                "shuffle_buffer_size"]
     
     trainSpecKeys = trainSpec.keys()
     for tag in tagsList:

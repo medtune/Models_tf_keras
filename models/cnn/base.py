@@ -149,11 +149,11 @@ class AssembleComputerVisionModel():
                 * batch_size : integer representing number of examples per batch 
         """
         # Get the CNN model base on the given name
-        self.modelName = params["name"]
+        self.modelName = params.pop("name")
         self.checkpointName = self.modelName
         self.cnn_model = famous_cnn.architectures.get(self.modelName)
         # Define the image type : 'Grayscale' or 'RGB'
-        self.input_type = params["image_type"]
+        self.input_type = params.pop("image_type")
         # Number of classes
         self.numClasses = params["num_classes"]
         # classification type
@@ -162,17 +162,19 @@ class AssembleComputerVisionModel():
         self.activationFunc = params["activation_func"]
         # Dict learning rate containing: initial lr, decay factor, epochs
         # before decay:
-        self.learningRate = params["learning_rate"]
+        self.learningRate = params.pop("learning_rate")
         # String representing the noun of the optimizer we want to use 
         # (ref. list of nouns)
-        _optimizer= _native_optimizers.get(params["optimizer_noun"])
+        _optimizer= _native_optimizers.get(params.pop("optimizer_noun"))
         self.optimizerNoun = _optimizer[0]
         self.optimizerObject = _optimizer[1]
         # Int. we use it to calculate the decay step 
-        self.num_batches_per_epoch = int(params["num_samples"] / params["batch_size"])
+        self.num_samples = params.pop("num_samples")
+        self.batch_size = params.pop("batch_size")
+        self.num_batches_per_epoch = int(self.num_samples / self.batch_size)
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
-        self.hyperParameters = {}
-        del params
+        self.hyperParameters = params
+
     
     def initModel(self, jobPath):
         """
@@ -198,31 +200,36 @@ class AssembleComputerVisionModel():
         evalDir = os.path.join(jobPath, "eval")
         if not os.path.exists(evalDir):
             os.makedirs(evalDir)
+        yamlFilePath = os.path.join(jobPath,'%s_hyperparameters.yaml'%self.modelName)
         modelPath = tf.train.latest_checkpoint(jobPath)
         if modelPath:
             # We retrieve naming according to the model name : 
             variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
+            self.hyperParameters = monitor.load_yaml_file(yamlFilePath)
             warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[variablesPattern])
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
+            if not os.path.exists(downloadDir):
+                os.mkdir(downloadDir)
             # We call 'get_hyperParameters' method in order to define the model
             # And it's HP (learning_rate, Batch_norm & epsilon(divisor))
-            modelPath = os.path.exists(os.path.join(downloadDir,"checkpoint"))
-            if not modelPath:
+            if not os.path.exists(yamlFilePath):
                 self.get_hyperParameters()
                 #TODO: Add instructions for writing Hyperparameters data in YAML file:
-                
+                monitor.write_into_yaml_file(downloadDir,
+                                            yamlFilePath,
+                                            self.hyperParameters)
                 print("Imagenet weights Download direction :" + downloadDir +"\n")
                 # Extract url from checkpoints dict using the attribute checkpointName 
                 url = famous_cnn.checkpoints.get(self.checkpointName)
                 monitor.download_imagenet_checkpoints(self.checkpointName, url, downloadDir)
+            else:
+                self.hyperParameters = monitor.load_yaml_file(yamlFilePath)
             # We define warm_start settings for loading variables from checkpoint
-            mappedModelName = famous_cnn.naming_mapping.get(self.modelName)
             varNametoPreviousName = famous_cnn.var_name_to_prev_var_name.get(self.modelName)
-            variablesPattern = mappedModelName + '[/+/^%s]'%(self.optimizerNoun)
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[variablesPattern, mappedModelName+'/+^Logits'],
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start='.*',
                                                               var_name_to_prev_var_name=varNametoPreviousName)
-        return warmStartSetting
+        return
     
     def get_modelName(self):
         return self.modelName
@@ -269,9 +276,8 @@ class AssembleComputerVisionModel():
             model_fn function
         """
         # Calculate CNN features (last layer output) :
-        cnn_features = self.cnn_model(features, **self.hyperParameters)
-        # Calculate the classification results : 
-        logits = self.classify(cnn_features)
+        logits = self.cnn_model(features, **self.hyperParameters)
+
         if mode == tf.estimator.ModeKeys.PREDICT:
             print("\nPredict Mode\n")
             _ , top_5 =  tf.nn.top_k(logits, k=5)
@@ -332,31 +338,6 @@ class AssembleComputerVisionModel():
                                               train_op=train_op,
                                               training_hooks=[trainHook, imageHook])
 
-    def classify(self, features):
-        """
-        We construct a Neural Network with the number of layers equivalent to
-        len classification_layers list.
-        Args:
-            features: features layer 
-        """
-        # Create intermediate variable representing the intermediate layers
-        # of the neural networks:
-        if hasattr(tf.nn, self.activationFunc):
-            #define the activation function 
-            activation = getattr(tf.nn, self.activationFunc)
-        modelNaming = famous_cnn.naming_mapping.get(self.modelName)
-        with tf.name_scope(modelNaming):
-            with tf.name_scope("Logits"):
-                inter = Flatten()(features)
-                if self.classificationLayers:
-                    for size in self.classificationLayers:
-                        inter = Dense(size, activation=activation)(inter)
-                if self.classificationType=="multilabel":
-                    logits = Dense(self.numClasses, activation=tf.nn.sigmoid)(inter)
-                else:
-                    logits = Dense(self.numClasses, activation=tf.nn.softmax)(inter)
-        return logits
-
     def getSummariesComputerVision(self, features, labels):
         """
         We compute and return the serialized of trainable
@@ -370,6 +351,6 @@ class AssembleComputerVisionModel():
         trainableVariables = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
         if trainableVariables:
             for variable in trainableVariables:
-                tf.summary.histogram(variable.name+':0', variable)
+                tf.summary.histogram(variable.name, variable)
         merge_summaries = tf.summary.merge_all()
         return merge_summaries

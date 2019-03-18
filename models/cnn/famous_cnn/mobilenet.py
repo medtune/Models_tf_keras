@@ -134,6 +134,10 @@ def mobilenet_v1(inputs,
                  pooling,
                  momentum,
                  epsilon,
+                 num_classes,
+                 activation_func,
+                 classification_layers,
+                 classification_type,
                  depthwise_multiplier=1):
     """
     Args:
@@ -219,7 +223,22 @@ def mobilenet_v1(inputs,
             x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
         elif pooling == 'max':
             x = keras.layers.GlobalMaxPool2D(name='max_pool')(x)
-    return x
+        # Create intermediate variable representing the intermediate layers
+        # of the neural networks:
+        if hasattr(tf.nn, activation_func):
+            #define the activation function 
+            activation = getattr(tf.nn, activation_func)
+        with tf.variable_scope("Logits"):
+            inter = keras.layers.Flatten()(x)
+            if classification_layers:
+                for size in classification_layers:
+                    inter = keras.layers.Dense(size, activation=activation)(inter)
+            if classification_type=="multilabel":
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.sigmoid)(inter)
+            else:
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.softmax)(inter)
+    return logits
+
 
 def slim_to_keras_namescope():
     """
@@ -233,6 +252,6 @@ def slim_to_keras_namescope():
         oldNameDepthwise = 'MobilenetV1/Conv2d_%d_depthwise/depthwise_weights' %i
         newNamePointwise = 'MobilenetV1/Conv2d_%d_pointwise/conv2d/kernel' %i
         oldNamePointwise = 'MobilenetV1/Conv2d_%d_pointwise/weights' %i
-        nameMapping[newNameDepthwise] = oldNameDepthwise
-        nameMapping[newNamePointwise] = oldNamePointwise
+        nameMapping[oldNameDepthwise] = newNameDepthwise
+        nameMapping[oldNamePointwise] = newNamePointwise
     return nameMapping

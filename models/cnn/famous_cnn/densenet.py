@@ -109,9 +109,12 @@ def _dense_block(x, blocks, name, activation, momentum, epsilon):
 def densenet(blocks,
             inputs,
             pooling,
-            activation,
             momentum,
-            epsilon):
+            epsilon,
+            num_classes,
+            activation_func,
+            classification_layers,
+            classification_type):
     """
     Args:
         blocks: list of integer, each element represents
@@ -147,75 +150,114 @@ def densenet(blocks,
                                             momentum=momentum,
                                             epsilon=epsilon,
                                             name="BatchNorm")(x)
-        x = keras.layers.Activation(activation, name="conv1_"+activation)(x)
+        x = keras.layers.Activation(activation_func, name="conv1_"+activation_func)(x)
         x = keras.layers.ZeroPadding2D(((1,1),(1,1)))(x)
         x = keras.layers.MaxPool2D(3, strides=2, name='pool1')(x)
-        x = _dense_block(x, blocks[0], 'dense_block1',activation, momentum, epsilon)
-        x = _transition_block(x, 0.5, 'transition_block1', activation, momentum, epsilon)
-        x = _dense_block(x, blocks[1], 'dense_block2',activation, momentum, epsilon)
-        x = _transition_block(x, 0.5, 'transition_block2',activation, momentum, epsilon)
-        x = _dense_block(x, blocks[2], 'dense_block3',activation, momentum, epsilon)
-        x = _transition_block(x, 0.5, 'transition_block3',activation, momentum, epsilon)
-        x = _dense_block(x, blocks[3], 'dense_block4',activation, momentum, epsilon)
+        x = _dense_block(x, blocks[0], 'dense_block1',activation_func, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block1', activation_func, momentum, epsilon)
+        x = _dense_block(x, blocks[1], 'dense_block2',activation_func, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block2',activation_func, momentum, epsilon)
+        x = _dense_block(x, blocks[2], 'dense_block3',activation_func, momentum, epsilon)
+        x = _transition_block(x, 0.5, 'transition_block3',activation_func, momentum, epsilon)
+        x = _dense_block(x, blocks[3], 'dense_block4',activation_func, momentum, epsilon)
         with tf.variable_scope('final_block'):
             x = keras.layers.BatchNormalization(axis=axis,
                                                 momentum=momentum,
                                                 epsilon=epsilon,
                                                 name='BatchNorm')(x)
-            x = keras.layers.Activation(activation, name=activation)(x)
+            x = keras.layers.Activation(activation_func, name=activation_func)(x)
         if pooling == 'avg':
             x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
         elif pooling == 'max':
             x = keras.layers.GlobalMaxPool2D(name='max_pool')(x)
-        return x
+        if hasattr(tf.nn, activation_func):
+            #define the activation function 
+            activation = getattr(tf.nn, activation_func)
+        with tf.variable_scope("Logits"):
+            inter = keras.layers.Flatten()(x)
+            if classification_layers:
+                for size in classification_layers:
+                    inter = keras.layers.Dense(size, activation=activation)(inter)
+            if classification_type=="multilabel":
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.sigmoid)(inter)
+            else:
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.softmax)(inter)
+    return logits
 
 def densenet_121(inputs,
-            pooling,
-            activation,
-            momentum,
-            epsilon):
+                pooling,
+                momentum,
+                epsilon,
+                num_classes,
+                activation_func,
+                classification_layers,
+                classification_type):
     return densenet(DENSENET121_BLOCKS,
-                    inputs,
+                    inputs=inputs,
                     pooling=pooling,
-                    activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon)
+                    epsilon=epsilon,
+                    num_classes=num_classes,
+                    activation_func=activation_func,
+                    classification_layers=classification_layers,
+                    classification_type=classification_type)
 
 def densenet_169(inputs,
             pooling,
             activation,
             momentum,
-            epsilon):
+            epsilon,
+            num_classes,
+            activation_func,
+            classification_layers,
+            classification_type):
     return densenet(DENSENET169_BLOCKS,
-                    inputs,
+                    inputs=inputs,
                     pooling=pooling,
-                    activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon)
+                    epsilon=epsilon,
+                    num_classes=num_classes,
+                    activation_func=activation_func,
+                    classification_layers=classification_layers,
+                    classification_type=classification_type)
 
 def densenet_201(inputs,
                 pooling,
                 activation,
                 momentum,
-                epsilon):
+                epsilon,
+                num_classes,
+                activation_func,
+                classification_layers,
+                classification_type):
     return densenet(DENSENET201_BLOCKS,
-                    inputs,
+                    inputs=inputs,
                     pooling=pooling,
-                    activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon)
+                    epsilon=epsilon,
+                    num_classes=num_classes,
+                    activation_func=activation_func,
+                    classification_layers=classification_layers,
+                    classification_type=classification_type)
 
 def densenet_264(inputs,
                 pooling,
                 activation,
                 momentum,
-                epsilon):
+                epsilon,
+                num_classes,
+                activation_func,
+                classification_layers,
+                classification_type):
     return densenet(DENSENET264_BLOCKS,
-                    inputs,
+                    inputs=inputs,
                     pooling=pooling,
-                    activation=activation,
                     momentum=momentum,
-                    epsilon=epsilon)
+                    epsilon=epsilon,
+                    num_classes=num_classes,
+                    activation_func=activation_func,
+                    classification_layers=classification_layers,
+                    classification_type=classification_type)
 
 setattr(densenet_121, '__doc__', densenet.__doc__)
 setattr(densenet_169, '__doc__', densenet.__doc__)
@@ -225,7 +267,7 @@ setattr(densenet_264, '__doc__', densenet.__doc__)
 
 def slim_to_keras_namescope(blocks):
     nameMapping = {}
-    if blocks == DENSENET121_BLOCKS
+    if blocks == DENSENET121_BLOCKS:
         naming = 'densenet121'
     elif blocks == DENSENET169_BLOCKS:
         naming = 'densenet169'
@@ -242,10 +284,10 @@ def slim_to_keras_namescope(blocks):
             oldNameXone = '%s/dense_block_%d/conv_block%d/x1/Conv/weights' %(naming, i+1, j)
             newNameXtwo = '%s/dense_block%d/conv_block%d/x2/Conv2D/kernel' %(naming, i+1, j)
             oldNameXtwo = '%s/dense_block%d/conv_block%d/x2/Conv/weights' %(naming, i+1, j)
-            nameMapping[newNameXone] = oldNameXone
-            nameMapping[newNameXtwo] = oldNameXtwo
+            nameMapping[oldNameXone] = newNameXone
+            nameMapping[oldNameXtwo] = newNameXtwo
         if i <= 2:
             newNameTransition = '%s/transition_block%d/blk/Conv2D/kernel' %(naming, i+1)
-            oldNameTrasnition = '%s/transition_block%d/blk/Conv/weights' %(naming, i+1)
-            nameMapping[newNameTransition] = oldNameTrasnition
+            oldNameTransition = '%s/transition_block%d/blk/Conv/weights' %(naming, i+1)
+            nameMapping[oldNameTransition] = newNameTransition
     return nameMapping

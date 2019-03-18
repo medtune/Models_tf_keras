@@ -71,7 +71,7 @@ var_name_to_prev_var_name = {
 
     'mobilenet_v2':mobilenetv2.slim_to_keras_namescope(),
 
-    'vgg_16': {},
+    'vgg_16': vgg16.slim_to_keras_namescope(),
 
-    'vgg_19': {},
+    'vgg_19': vgg19.slim_to_keras_namescope(),
 }

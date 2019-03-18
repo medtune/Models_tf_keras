@@ -59,21 +59,21 @@ def _inverted_res_block(inputs,
     x = inputs
     if block_id:
         prefix = 'expanded_conv_{}'.format(block_id)
-        with tf.variable_scope(prefix):
-            with tf.variable_scope('expand'):
-                x = keras.layers.Conv2D(expansion * in_channels,
-                                        kernel_size=1,
-                                        padding='same',
-                                        use_bias=False,
-                                        activation=None,
-                                        name='Conv2D')(x)
-                x = keras.layers.BatchNormalization(epsilon=epsilon,
-                                                    momentum=momentum,
-                                                    name='BatchNorm')(x)
-                x = keras.layers.ReLU(6., name='Relu6')(x)
     else:
         prefix = 'expanded_conv'
     with tf.variable_scope(prefix):
+        if block_id:
+                with tf.variable_scope('expand'):
+                    x = keras.layers.Conv2D(expansion * in_channels,
+                                            kernel_size=1,
+                                            padding='same',
+                                            use_bias=False,
+                                            activation=None,
+                                            name='Conv2D')(x)
+                    x = keras.layers.BatchNormalization(epsilon=epsilon,
+                                                        momentum=momentum,
+                                                        name='BatchNorm')(x)
+                    x = keras.layers.ReLU(6., name='Relu6')(x)
         if stride == 2:
             x = keras.layers.ZeroPadding2D(padding=correct_pad(x, 3),
                                     name='pad')(x)
@@ -107,6 +107,10 @@ def mobilenet_v2(inputs,
                 pooling,
                 momentum,
                 epsilon,
+                num_classes,
+                activation_func,
+                classification_layers,
+                classification_type,
                 depthwise_multiplier=1):
 
     """
@@ -216,7 +220,8 @@ def mobilenet_v2(inputs,
         with tf.variable_scope('Conv_1'):
             x = keras.layers.Conv2D(last_block_filters,
                                     kernel_size=1,
-                                    use_bias=False)(x)
+                                    use_bias=False,
+                                    name='Conv2D')(x)
             x = keras.layers.BatchNormalization(epsilon=epsilon,
                                                 momentum=momentum,
                                                 name='BatchNorm')(x)
@@ -225,8 +230,21 @@ def mobilenet_v2(inputs,
             x_final = keras.layers.GlobalAveragePooling2D()(x_final)
         else:
             x_final = keras.layers.GlobalMaxPool2D()(x_final)
-        
-    return x_final
+        # Create intermediate variable representing the intermediate layers
+        # of the neural networks:
+        if hasattr(tf.nn, activation_func):
+            #define the activation function 
+            activation = getattr(tf.nn, activation_func)
+        with tf.variable_scope("Logits"):
+            inter = keras.layers.Flatten()(x_final)
+            if classification_layers:
+                for size in classification_layers:
+                    inter = keras.layers.Dense(size, activation=activation)(inter)
+            if classification_type=="multilabel":
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.sigmoid)(inter)
+            else:
+                logits = keras.layers.Dense(num_classes, activation=tf.nn.softmax)(inter)
+    return logits
 
 def slim_to_keras_namescope():
     """
@@ -235,15 +253,17 @@ def slim_to_keras_namescope():
     """
     nameMapping = {}
     nameMapping['MobilenetV2/Conv/Conv2D/kernel'] = 'MobilenetV2/Conv/weights'
-    nameMapping['MobilenetV2/expanded_conv/depthwise/Conv2D/kernel'] = 'MobilenetV2/expanded_conv/depthwise/weights'
+    nameMapping['MobilenetV2/expanded_conv/depthwise/Conv2D/depthwise_kernel'] = \
+        'MobilenetV2/expanded_conv/depthwise/depthwise_weights'
     nameMapping['MobilenetV2/expanded_conv/project/Conv2D/kernel'] = 'MobilenetV2/expanded_conv/project/weights'
-    for i in range(1,16):
+    nameMapping['MobilenetV2/Conv_1/Conv2D/kernel']= 'MobilenetV2/Conv_1/weights'
+    for i in range(1,17):
         newNameExpand = 'MobilenetV2/expanded_conv_%d/expand/Conv2D/kernel' %i
         oldNameExpand = 'MobilenetV2/expanded_conv_%d/expand/weights' %i
         newNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/Conv2D/kernel' %i
-        oldNameDepthwise = 'MobilenetV2/expanded_conv_%d/weights' %i
+        oldNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/depthwise_weights' %i
         newNameProject = 'MobilenetV2/expanded_conv_%d/project/Conv2D/kernel' %i
-        oldNameProject = 'MobilenetV2/expanded_conv_%d/weights' %i
+        oldNameProject = 'MobilenetV2/expanded_conv_%d/project/weights' %i
         nameMapping[newNameExpand] = oldNameExpand
         nameMapping[newNameDepthwise] = oldNameDepthwise
         nameMapping[newNameProject] = oldNameProject
