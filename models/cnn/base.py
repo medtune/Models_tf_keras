@@ -131,8 +131,9 @@ def get_input(demand):
 
 class AssembleComputerVisionModel():
 
-    def __init__(self, params):
+    def __init__(self, job_path,params):
         """
+        job_path
         params : from the configuration file, we take the following params as
             dict :
                 * model.name : model name to pass to the AssembleModel
@@ -174,7 +175,7 @@ class AssembleComputerVisionModel():
         self.num_batches_per_epoch = int(self.num_samples / self.batch_size)
         self.decay_steps = int(self.learningRate["before_decay"] * self.num_batches_per_epoch)
         self.hyperParameters = params
-
+        self.warmStartSettings = self.initModel(job_path)
     
     def initModel(self, jobPath):
         """
@@ -192,6 +193,9 @@ class AssembleComputerVisionModel():
                                 |_imagenet_weights\
                                 |_train\
                                 |_eval")
+        # Create log_dir : argscope_config
+        if not os.path.exists(jobPath):
+            os.mkdir(jobPath)
         # TODO: Check how to configure training dir in Estimator
         trainDir = os.path.join(jobPath,"train")
         if not os.path.exists(trainDir):
@@ -202,11 +206,11 @@ class AssembleComputerVisionModel():
             os.makedirs(evalDir)
         yamlFilePath = os.path.join(jobPath,'%s_hyperparameters.yaml'%self.modelName)
         modelPath = tf.train.latest_checkpoint(jobPath)
+        variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
         if modelPath:
             # We retrieve naming according to the model name : 
-            variablesPattern = famous_cnn.naming_mapping.get(self.modelName)
             self.hyperParameters = monitor.load_yaml_file(yamlFilePath)
-            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[variablesPattern])
+            warmStartSetting = tf.estimator.WarmStartSettings(modelPath, vars_to_warm_start=[".*"])
         else:
             downloadDir = os.path.join(jobPath,"imagenet_weights")
             if not os.path.exists(downloadDir):
@@ -227,9 +231,11 @@ class AssembleComputerVisionModel():
                 self.hyperParameters = monitor.load_yaml_file(yamlFilePath)
             # We define warm_start settings for loading variables from checkpoint
             varNametoPreviousName = famous_cnn.var_name_to_prev_var_name.get(self.modelName)
-            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start='.*',
+            pattern = '%s/[^[Logits]]'%variablesPattern
+            opattern = variablesPattern + '/*[^/%s]'%self.optimizerNoun
+            warmStartSetting = tf.estimator.WarmStartSettings(downloadDir, vars_to_warm_start=[pattern, opattern],
                                                               var_name_to_prev_var_name=varNametoPreviousName)
-        return
+        return warmStartSetting
     
     def get_modelName(self):
         return self.modelName

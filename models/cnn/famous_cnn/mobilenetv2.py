@@ -260,7 +260,7 @@ def slim_to_keras_namescope():
     for i in range(1,17):
         newNameExpand = 'MobilenetV2/expanded_conv_%d/expand/Conv2D/kernel' %i
         oldNameExpand = 'MobilenetV2/expanded_conv_%d/expand/weights' %i
-        newNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/Conv2D/kernel' %i
+        newNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/Conv2D/depthwise_kernel' %i
         oldNameDepthwise = 'MobilenetV2/expanded_conv_%d/depthwise/depthwise_weights' %i
         newNameProject = 'MobilenetV2/expanded_conv_%d/project/Conv2D/kernel' %i
         oldNameProject = 'MobilenetV2/expanded_conv_%d/project/weights' %i

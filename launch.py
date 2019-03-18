@@ -14,9 +14,6 @@ def main():
     datasetSpec, modelSpec, deviceSpec  = read_config.decode(yamlFilename)
     # Construct the training folder 
     jobDir = os.path.join(cwd, "job_"+ modelSpec.get("name"))
-    # Create log_dir : argscope_config
-    if not os.path.exists(jobDir):
-        os.mkdir(jobDir)
     #===================================================================== Training ===========================================================================#
     #Adding the graph:
     #Set the verbosity to INFO level
@@ -25,9 +22,8 @@ def main():
     # distribute::distribution Strategy ; xla:: xla computation optimization
     strategy, config = read_config.setDeviceConfig(deviceSpec["distribute"],
                                                     deviceSpec["xla"]  )
-    model = base.AssembleComputerVisionModel(modelSpec)
+    model = base.AssembleComputerVisionModel(jobDir, modelSpec)
     # Define warm start setting using initModel method:
-    warmStartSetting = model.initModel(jobDir)
     # Define configuration:
     run_config = tf.estimator.RunConfig(save_checkpoints_steps = model.num_batches_per_epoch,
                                         keep_checkpoint_max=datasetSpec["num_epochs"],
@@ -38,7 +34,7 @@ def main():
     estimator = tf.estimator.Estimator(model.model_fn,
                                        model_dir=jobDir,
                                        config=run_config,
-                                       warm_start_from=warmStartSetting)
+                                       warm_start_from=model.warmStartSettings)
 
     #Define trainspec estimator, including max number of step for training
     max_step = model.num_batches_per_epoch * datasetSpec["num_epochs"]
