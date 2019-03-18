@@ -10,8 +10,8 @@ import tensorflow as tf
 
 
 def vgg_16(inputs,
-           pooling='max',
-           activation="relu"):
+           pooling,
+           activation):
     """
     Arguments:
         - inputs: image input tensor 
@@ -113,3 +113,13 @@ def vgg_16(inputs,
         elif pooling == 'max':
             x = keras.layers.GlobalMaxPooling2D(name=naming+'max_pool')(x)
     return x
+
+def slim_to_keras_namescope():
+    convolutions = [2,2,3,3,3]
+    nameMapping = {}
+    for i, value in enumerate(convolutions):
+        for j in range(1, value+1):
+            newVariablescope = 'vgg_16/conv%d/conv%d_%d/Conv2D/kernel'%(i+1, i+1, j)
+            oldVariablescope =  'vgg_16/conv%d/conv%d_%d/Conv/weights'%(i+1, i+1, j)
+            nameMapping[newVariablescope] = nameMapping[oldVariablescope]
+    return nameMapping

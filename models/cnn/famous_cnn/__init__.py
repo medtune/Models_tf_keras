@@ -59,13 +59,13 @@ checkpoints = {
 # especially for Conv2d/ DepthwiseConv2D. We have to write the mapping from
 # new variables scopes to old variables scopes
 var_name_to_prev_var_name = {
-    'densenet_121': {'densenet121/conv1/conv2d/kernel':'densenet121/conv1/weights',},
+    'densenet_121': densenet.slim_to_keras_namescope(densenet.DENSENET121_BLOCKS),
 
-    'densenet_169': {'densenet169/conv1/conv2d/kernel':'densenet169/conv1/weights'},
+    'densenet_169': densenet.slim_to_keras_namescope(densenet.DENSENET169_BLOCKS),
 
-    'densenet_201': {},
+    'densenet_201': densenet.slim_to_keras_namescope(densenet.DENSENET201_BLOCKS),
 
-    'densenet_264': {},
+    'densenet_264': densenet.slim_to_keras_namescope(densenet.DENSENET264_BLOCKS),
 
     'mobilenet_v1': mobilenet.slim_to_keras_namescope(),
 

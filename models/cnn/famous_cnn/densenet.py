@@ -12,6 +12,11 @@ DenseNet models for Keras.
 import tensorflow as tf
 import tensorflow.keras as keras
 
+DENSENET121_BLOCKS = [6, 12, 24, 16]
+DENSENET169_BLOCKS = [6, 12, 32, 32]
+DENSENET201_BLOCKS = [6, 12, 48, 32]
+DENSENET264_BLOCKS = [6, 12, 64, 48]
+
 def _transition_block(x, reduction, name, activation,
                     momentum, epsilon):
     """
@@ -121,13 +126,13 @@ def densenet(blocks,
     """
     assert len(blocks)==4
     axis = 3 if keras.backend.image_data_format()=='channels_last' else 1
-    if blocks == [6, 12, 24, 16]:
+    if blocks == DENSENET121_BLOCKS:
         naming = 'densenet121'
-    elif blocks == [6, 12, 32, 32]:
+    elif blocks == DENSENET169_BLOCKS:
         naming = 'densenet169'
-    elif blocks == [6, 12, 48, 32]:
+    elif blocks == DENSENET201_BLOCKS:
         naming = 'densenet201'
-    elif blocks == [6, 12, 64, 48]:
+    elif blocks == DENSENET264_BLOCKS:
         naming= 'densenet264'
     else:
         naming = 'densenet'
@@ -169,7 +174,7 @@ def densenet_121(inputs,
             activation,
             momentum,
             epsilon):
-    return densenet([6,12,24,16],
+    return densenet(DENSENET121_BLOCKS,
                     inputs,
                     pooling=pooling,
                     activation=activation,
@@ -181,7 +186,7 @@ def densenet_169(inputs,
             activation,
             momentum,
             epsilon):
-    return densenet([6, 12, 32, 32],
+    return densenet(DENSENET169_BLOCKS,
                     inputs,
                     pooling=pooling,
                     activation=activation,
@@ -193,7 +198,7 @@ def densenet_201(inputs,
                 activation,
                 momentum,
                 epsilon):
-    return densenet([6, 12, 48, 32],
+    return densenet(DENSENET201_BLOCKS,
                     inputs,
                     pooling=pooling,
                     activation=activation,
@@ -205,7 +210,7 @@ def densenet_264(inputs,
                 activation,
                 momentum,
                 epsilon):
-    return densenet([6, 12, 64, 48],
+    return densenet(DENSENET264_BLOCKS,
                     inputs,
                     pooling=pooling,
                     activation=activation,
@@ -220,13 +225,13 @@ setattr(densenet_264, '__doc__', densenet.__doc__)
 
 def slim_to_keras_namescope(blocks):
     nameMapping = {}
-    if blocks == [6, 12, 24, 16]:
+    if blocks == DENSENET121_BLOCKS
         naming = 'densenet121'
-    elif blocks == [6, 12, 32, 32]:
+    elif blocks == DENSENET169_BLOCKS:
         naming = 'densenet169'
-    elif blocks == [6, 12, 48, 32]:
+    elif blocks == DENSENET201_BLOCKS:
         naming = 'densenet201'
-    elif blocks == [6, 12, 64, 48]:
+    elif blocks == DENSENET264_BLOCKS:
         naming= 'densenet264'
     else:
         naming = 'densenet'
@@ -240,7 +245,7 @@ def slim_to_keras_namescope(blocks):
             nameMapping[newNameXone] = oldNameXone
             nameMapping[newNameXtwo] = oldNameXtwo
         if i <= 2:
-            newNameTransition = '%s/transition_block%d/blk/Conv2D/kernel' %(naming, i)
-            oldNameTrasnition = '%s/transition_block%d/blk/Conv/weights' %(naming, i)
+            newNameTransition = '%s/transition_block%d/blk/Conv2D/kernel' %(naming, i+1)
+            oldNameTrasnition = '%s/transition_block%d/blk/Conv/weights' %(naming, i+1)
             nameMapping[newNameTransition] = oldNameTrasnition
     return nameMapping
