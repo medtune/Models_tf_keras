@@ -58,7 +58,3 @@ def per_channel_stddev(dataframe):
 
     """
     pass
-
-
-a = load_images("D:/MURA-v1.1/train/*/*/*/*.png")
-spark.stop()

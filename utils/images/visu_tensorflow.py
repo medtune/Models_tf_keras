@@ -34,8 +34,8 @@ def extract_image(filename, num_channels):
     read, decode and convert the image dtype
     """
     image_raw = tf.read_file(filename)
-#    image = tf.image.decode_image(image_raw, num_channels)
-#    image = tf.image.convert_image_dtype(image, tf.float32)
+    image = tf.image.decode_image(image_raw, num_channels)
+    image = tf.image.convert_image_dtype(image, tf.float32)
     return image_raw
 
 def per_pixel_mean_stddev(dataset, image_size):
